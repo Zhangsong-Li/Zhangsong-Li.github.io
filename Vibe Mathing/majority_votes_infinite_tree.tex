@@ -1,0 +1,841 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=27mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Pp}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\TV}{\mathrm{TV}}
+\newcommand{\one}{\mathbf 1}
+\newcommand{\sign}{\operatorname{sign}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\cN}{\mathcal N}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\title{An explicit superpolynomial upper bound for the majority-consensus threshold}
+\author{A proof note based on Kanoria--Montanari (2011)}
+\date{September 7, 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+For the synchronous majority dynamics and fair tie-breaking convention of
+Kanoria--Montanari, this note derives the upper bound
+\[
+ \theta_*(k)\le
+ \exp\!\left\{-\frac{\log k}{\log 2}
+  \log\log k+O(\log k)\right\}.
+\]
+The argument makes the time horizon in the dynamic cavity calculation
+quantitative. Its two main ingredients are bounds on the covariance and
+response of the cavity process, and a one-coordinate local central limit
+estimate that does not involve the least probable trajectory.
+This is an upper bound, not an asymptotic equivalence; no matching
+large-degree lower bound is asserted.
+\end{abstract}
+
+\section{Statement and relationship to the original paper}
+All logarithms are natural. The degree is denoted by $k$; the initial spin
+mean is $\theta$, so that $\Pp(\sigma_v(0)=+1)=(1+\theta)/2$.
+The update is synchronous majority, with a fresh fair output coin at a tie.
+This has the same law as the tie-breaking convention in \cite{KM}.
+We retain the paper's definitions of $C(t,s)$, $R(t,s)$ and the unbiased
+cavity process $\tau$:
+\[
+ \tau(t+1)=\sign\!\left(\eta(t)+\sum_{s<t}R(t,s)\tau(s)\right),
+ \qquad \E\eta(t)\eta(s)=C(t,s),
+\]
+where $\tau(0)$ is a fair sign independent of the Gaussian process $\eta$.
+The consistency conditions are
+\[
+ C(t,s)=\E\tau(t)\tau(s),\qquad
+ R(t,s)=\left.\partial_{h(s)}\E\tau_h(t)\right|_{h=0}.
+\]
+Put $C_T=(C(t,s))_{0\le t,s\le T}$,
+$R_T=(R(t,s))_{0\le t,s\le T}$, with zero entries for $s\ge t$, and
+\[
+ r_j=R(j,j-1),\qquad a_0=1,\qquad a_t=\prod_{j=1}^t r_j.
+\]
+The existence, strict positive definiteness, and finite-time cavity
+identities proved in \cite{KM} are used below. The proof does not substitute
+a growing time into an unquantified fixed-time convergence theorem.
+
+\begin{theorem}\label{thm:finite}
+There are absolute constants $A,B,k_0$ such that the following holds.
+Let $T\ge0$ and $k\ge k_0$ satisfy
+\begin{equation}\label{eq:degree-condition}
+ \log k\ge A2^{T/2}.
+\end{equation}
+For
+\begin{equation}\label{eq:initial-bias}
+ \theta=\frac{8}{a_T k^{(T+1)/2}},
+\end{equation}
+one has $0<\theta<1$ and
+\[
+ \Pp_\theta\{\sigma_v(T+2)=-1\}\le e^{-k/8}.
+\]
+Consequently,
+\begin{equation}\label{eq:finite-bound}
+ \theta_*(k)\le\frac{8}{a_T k^{(T+1)/2}}
+ \le k^{-(T+1)/2}\exp\{B2^{T/2}\}.
+\end{equation}
+The conclusion holds for odd and even degrees.
+\end{theorem}
+
+\begin{theorem}\label{thm:asymptotic}
+As $k\to\infty$,
+\begin{equation}\label{eq:main}
+ \theta_*(k)\le
+ \exp\!\left\{-\frac{\log k}{\log 2}
+  \log\log k+O(\log k)\right\}.
+\end{equation}
+In particular, for every $c<1/\log 2$ and every sufficiently large $k$,
+\[
+ \theta_*(k)\le e^{-c\log k\log\log k}.
+\]
+\end{theorem}
+
+The original Theorem 2.3 in \cite{KM} gives $\theta_*(k)=o(k^{-M})$
+for every fixed $M$. The improvement in \eqref{eq:main} is an explicit
+choice of a diverging exponent. The constant $1/\log 2$ is a constant
+produced by this argument; it is not claimed to be the true asymptotic
+constant of the threshold.
+
+\section{Structural facts about the cavity process}
+\begin{lemma}\label{lem:structure}
+Every finite cavity trajectory is associated and invariant under
+simultaneous spin reversal. Moreover,
+\[
+ C(t,s)\ge0,\qquad R(t,s)\ge0,
+\]
+and
+\begin{equation}\label{eq:parity}
+ C(t,s)=0\quad(t-s\text{ odd}),\qquad
+ R(t,s)=0\quad(t-s\text{ even}).
+\end{equation}
+The even and odd spin subsequences are independent. For every nonempty
+finite set $J$ of time indices,
+\begin{equation}\label{eq:constant-path-mass}
+ \Pp\{\tau(s)=+1\text{ for all }s\in J\}\ge2^{-|J|},\qquad
+ C_J\succeq 2^{1-|J|}\one_J\one_J^\top.
+\end{equation}
+\end{lemma}
+\begin{proof}
+Induct on time. If the previously constructed responses are nonnegative,
+the effective-process spins are nondecreasing functions of the past
+Gaussian fields, the initial sign, and the added fields $h$.
+Thus the newly constructed responses are nonnegative. A Gaussian vector
+with nonnegative covariances is associated \cite{Pitt}; adjoining an
+independent initial sign preserves association. Applying nondecreasing
+maps therefore shows that the enlarged spin trajectory is associated,
+and hence that its covariances are nonnegative. Simultaneous spin reversal
+preserves its law and gives zero means.
+
+The parity identities follow from the recursion. The odd spins depend
+only on the even-indexed Gaussian fields. The even spins depend only on
+$\tau(0)$ and the odd-indexed Gaussian fields. The two Gaussian blocks are
+independent, giving the asserted independence and completing the parity
+induction. This is the bipartite decomposition noted in \cite{KM}.
+
+Association gives the first inequality in \eqref{eq:constant-path-mass}.
+The two constant sign vectors have equal probabilities. Their contribution
+to $\E\tau_J\tau_J^\top$ gives the second inequality.
+\end{proof}
+
+\begin{lemma}[Gaussian projection inequality]\label{lem:projection}
+Let $\boldsymbol c_T=(C(t,0))_{0\le t\le T}$. Then
+\begin{equation}\label{eq:projection}
+ C_T\succeq \boldsymbol c_T\boldsymbol c_T^\top+R_TC_TR_T^\top.
+\end{equation}
+In particular,
+\begin{equation}\label{eq:memory-bounds}
+ \E\left(\sum_{s<t}R(t,s)\tau(s)\right)^2\le1,
+ \qquad \sum_{s<t}R(t,s)^2\le1,
+ \qquad \sum_{s<t}R(t,s)\le\sqrt t.
+\end{equation}
+\end{lemma}
+\begin{proof}
+Shifting the Gaussian vector by $h$ is exactly the same as adding $h$ in
+the effective-process recursion. Gaussian differentiation therefore gives
+\[
+ \E[\tau^T(\eta^T)^\top]=R_TC_T.
+\]
+The orthogonal projection of $\tau^T$ onto the linear span of
+$\tau(0),\eta(0),\ldots,\eta(T)$ is
+$\boldsymbol c_T\tau(0)+R_T\eta^T$. The covariance matrix of its residual is
+positive semidefinite, proving \eqref{eq:projection}.
+Its diagonal gives the first inequality in \eqref{eq:memory-bounds}.
+Since $R$ and $C$ are entrywise nonnegative and $C(s,s)=1$, it also gives
+$\sum_sR(t,s)^2\le1$. Cauchy--Schwarz proves the final assertion.
+\end{proof}
+
+\section{A Gaussian boundary-mass estimate}
+The following lemma is the device that avoids a minimum-trajectory
+probability. A rare, arbitrary sign pattern is not used.
+
+\begin{lemma}\label{lem:boundary}
+Let $X\in\{-1,+1\}^m$, let $C=\E XX^\top$ be positive definite, and
+suppose
+\[
+ p=\Pp\{X_1=\cdots=X_m\}>0.
+\]
+For $G\sim\cN(0,C)$ and $m\ge2$,
+\begin{equation}\label{eq:conditional-orthant}
+ \Pp\{G_1,\ldots,G_{m-1}\ge0\mid G_m=0\}
+ \ge \frac{e^{-1}p^{(m-2)/2}}
+ {2^{3(m-1)/2}\Gamma((m+1)/2)}.
+\end{equation}
+For $m=1$ the conditional orthant probability is understood as $1$.
+Furthermore, writing $\phi_{\mu,C}$ for Gaussian density and
+$L=\mu^\top C^{-1}\mu$, one has
+\begin{equation}\label{eq:shifted-face}
+ \int_{\R_+^{m-1}}\phi_{\mu,C}(z_1,\ldots,z_{m-1},0)\,dz
+ \ge (2\pi)^{-1/2}e^{-L}
+ \left[\Pp\{G_{<m}\ge0\mid G_m=0\}\right]^2.
+\end{equation}
+\end{lemma}
+\begin{proof}
+Set $D_i=(1-X_iX_m)/2$ for $i<m$, $q=\E D$, and $M=\E DD^\top$.
+A direct calculation gives
+\[
+ C_{<m,<m}-C_{<m,m}C_{m,<m}=4(M-qq^\top).
+\]
+This matrix is positive definite. Consider jointly centered Gaussian
+$(W,Z)$ with covariance
+\[
+ \begin{pmatrix} M&q\\q^\top&1\end{pmatrix}.
+\]
+This covariance matrix is the Gram matrix of the random vector $(D,1)$.
+Let $v=1-q^\top M^{-1}q$. For every deterministic vector $a$,
+\[
+ \E(1-a^\top D)^2\ge\Pp(D=0)=p,
+\]
+so that $v\ge p$. Conditional on $W$,
+$Z$ has mean $h(W)=q^\top M^{-1}W$ and variance $v$.
+The variance of $h(W)$ is $1-v\le1$.
+
+Write $W=M^{1/2}Z_0$, where $Z_0$ is a standard Gaussian vector
+in dimension $d=m-1$. Then $h(W)=a^\top Z_0$ for a vector with
+$\norm a^2=1-v\le1$. The entries of $M$ are nonnegative, so Gaussian
+association gives $\Pp(W\ge0)\ge2^{-d}$. The event $W\ge0$ is a cone
+in $Z_0$, and hence is independent of the Gaussian radius $\norm{Z_0}$.
+On $\{\norm{Z_0}\le\sqrt v\}$, the density ratio for conditioning $Z=0$
+satisfies
+\[
+ \frac{f_{Z\mid W}(0\mid W)}{f_Z(0)}
+ =v^{-1/2}\exp\{-h(W)^2/(2v)\}\ge v^{-1/2}e^{-1/2}.
+\]
+Since $0<v\le1$, integration of the standard Gaussian density over the
+ball of radius $\sqrt v$ gives
+\[
+ \Pp(\norm{Z_0}\le\sqrt v)
+ \ge \frac{e^{-1/2}v^{d/2}}{2^{d/2}\Gamma(d/2+1)}.
+\]
+Combining these facts and using $v\ge p$ yields
+\[
+ \Pp(W\ge0\mid Z=0)
+ \ge \frac{e^{-1}v^{(d-1)/2}}{2^{3d/2}\Gamma(d/2+1)}
+ \ge \frac{e^{-1}p^{(m-2)/2}}
+             {2^{3(m-1)/2}\Gamma((m+1)/2)}.
+\]
+The conditional covariance of $W$ is $M-qq^\top$; multiplication by $2$
+identifies its orthant probability with the one in
+\eqref{eq:conditional-orthant}.
+
+For the second assertion, put
+$\Gamma=C_{<m,<m}-C_{<m,m}C_{m,<m}$ and
+$\nu=\mu_{<m}-C_{<m,m}\mu_m$.
+The conditional mean and covariance on the last-coordinate-zero slice
+are $\nu,\Gamma$, and
+\[
+ L=\mu_m^2+\nu^\top\Gamma^{-1}\nu.
+\]
+For any measurable $A$, Cauchy--Schwarz applied to the Gaussian
+likelihood ratio gives
+\[
+ \cN(\nu,\Gamma)(A)
+ \ge \cN(0,\Gamma)(A)^2
+       e^{-\nu^\top\Gamma^{-1}\nu}.
+\]
+Multiplying by the marginal density
+$(2\pi)^{-1/2}e^{-\mu_m^2/2}$ proves \eqref{eq:shifted-face}.
+\end{proof}
+
+\section{Quantitative bounds on response and covariance}
+\begin{proposition}\label{prop:quantitative-cavity}
+There is an absolute constant $B$ such that, for every $t\ge1$,
+\begin{equation}\label{eq:response-lower}
+ 0<r_t\le1,\qquad r_t\ge\exp\{-B2^{t/2}\},
+\end{equation}
+and, for every $T\ge0$,
+\begin{equation}\label{eq:covariance-lower}
+ \lambda_{\min}(C_T)\ge\exp\{-B2^{T/2}\},\qquad
+ a_T\ge\exp\{-B2^{T/2}\}.
+\end{equation}
+\end{proposition}
+\begin{proof}
+First consider $r_{t+1}=R(t+1,t)$. Let
+\[
+ I=\{s\le t:s\equiv t\pmod2\},\qquad
+ J=\{s<t:s\not\equiv t\pmod2\}.
+\]
+Set $n=|I|=\lfloor t/2\rfloor+1$ and $m=|J|=\lceil t/2\rceil$.
+To lower-bound the last-step response, retain only the trajectory in which
+all the past spins in the active parity class are $+1$.
+On that trajectory the Gaussian field vector on $I$ has deterministic
+shift
+\[
+ \mu=R_{I,J}\one_J.
+\]
+If $J$ is empty, $\mu=0$. Otherwise, \eqref{eq:projection} and
+\eqref{eq:constant-path-mass} imply
+\[
+ C_I\succeq R_{I,J}C_JR_{I,J}^\top
+ \succeq 2^{1-m}\mu\mu^\top,
+ \qquad \mu^\top C_I^{-1}\mu\le2^{m-1}.
+\]
+The spin vector $\tau_I$ satisfies
+$\Pp(\tau_I\text{ is constant})\ge2^{1-n}$.
+Lemma \ref{lem:boundary} gives a conditional Gaussian orthant
+probability of at least $\exp\{-B(n+1)^2\}$. Its shifted-face bound and
+$\mu^\top C_I^{-1}\mu\le2^{m-1}$ therefore lower-bound the Gaussian
+face mass for this trajectory by
+\[
+ \exp\{-B(2^m+(n+1)^2)\}\ge\exp\{-B'2^{t/2}\}.
+\]
+Here the empty-$J$ case has zero shift cost and is included by enlarging
+the absolute constants.
+This face mass is a lower bound on $r_{t+1}$: when the active class
+contains $\tau(0)$ its probability $1/2$ is canceled by the factor $2$
+in differentiating the expectation of a sign; otherwise the factor is $2$
+and may simply be discarded. This proves the lower bound in
+\eqref{eq:response-lower}, after changing the absolute constant.
+The upper bound follows from \eqref{eq:memory-bounds}.
+
+For the covariance bound, iterate \eqref{eq:projection}, using the
+nilpotence of $R_T$:
+\[
+ C_T\succeq\sum_{j=0}^T R_T^j \boldsymbol c_T\boldsymbol c_T^\top(R_T^\top)^j=V_TV_T^\top,
+ \qquad V_T=(R_T^j\boldsymbol c_T)_{j=0}^T.
+\]
+The displayed vectors are the columns of $V_T$. This matrix is lower
+triangular and its $j$th diagonal
+entry, with indexing starting at $0$, is $a_j$. Consequently,
+\[
+ \det C_T\ge\prod_{j=0}^T a_j^2
+ =\prod_{j=1}^T r_j^{2(T+1-j)}.
+\]
+Since $\lambda_{\max}(C_T)\le T+1$,
+\[
+ -\log\lambda_{\min}(C_T)
+ \le T\log(T+1)+2\sum_{j=1}^T(T+1-j)(-\log r_j).
+\]
+The geometric-sum estimates
+\[
+ \sum_{j=1}^T2^{j/2}\le B2^{T/2},\qquad
+ \sum_{j=1}^T(T+1-j)2^{j/2}\le B2^{T/2}
+\]
+prove both assertions in \eqref{eq:covariance-lower}.
+\end{proof}
+
+\begin{remark}
+The factor $2^{T/2}$, rather than $2^T$, is important. The boundary
+calculation involves one parity block. Discarding this decomposition
+would lose a factor $2$ in the leading coefficient of \eqref{eq:main}.
+\end{remark}
+
+\section{A one-coordinate local central limit estimate}
+The original local CLT assumes a lower bound on every trajectory atom.
+Here only one coordinate is pinned, allowing that assumption to be
+removed.
+
+\begin{lemma}\label{lem:one-face-clt}
+Let $X_1,\ldots,X_N$ be i.i.d. in $\{-1,+1\}^d$, with mean $m$ and
+covariance $\Sigma$, where
+\[
+ \norm{\sqrt N m}_\infty\le M,\qquad \Sigma\succeq\lambda I,
+ \qquad 0<\lambda\le1.
+\]
+Let $S=\sum_iX_i$, $\mu=\sqrt N m$ and $G\sim\cN(\mu,\Sigma)$.
+There is a fixed numerical exponent $c_0$ such that, with
+\[
+ H=\left[\frac{C(d+1)(M+1)}\lambda\right]^{c_0},
+\]
+the following estimates hold whenever $N\ge H^2$.
+Ordinary orthant probabilities, with integer thresholds of absolute value
+at most $5$, have Gaussian approximation error at most $H/\sqrt N$,
+after normalizing $S$ by $\sqrt N$.
+For any coordinate $j$, any admissible parity value $b$ with $|b|\le5$,
+and signs $\varepsilon_i\in\{-1,+1\}$,
+\begin{align}
+ &\left|\frac{\sqrt N}{2}\Pp\{S_j=b,
+       \ \varepsilon_i S_i\ge b_i\ (i\ne j)\}
+       -\int_{\substack{z_j=0\\\varepsilon_i z_i\ge0\ (i\ne j)}}
+           \phi_{\mu,\Sigma}(z)\,dz_{-j}\right|
+ \le\frac H{\sqrt N},\label{eq:face-clt}
+\end{align}
+where $|b_i|\le5$. The same statement holds with strict inequalities
+and with averages of strict and weak inequalities.
+Gaussian orthant probabilities and these Gaussian face integrals are
+Lipschitz in their mean and covariance on the indicated parameter range,
+with a constant bounded by a fixed polynomial in
+$d+1,M+1,\lambda^{-1}$.
+\end{lemma}
+\begin{proof}
+The ordinary approximation follows from the convex-set multivariate
+Berry--Esseen bound \cite{Bentkus}. After whitening, each centered
+summand has norm at most $2\sqrt{d/\lambda}$, giving an error at most
+$C d^{7/4}\lambda^{-3/2}/\sqrt N$.
+
+For \eqref{eq:face-clt}, condition on $S_j=b$. There are exactly
+$N_+=(N+b)/2$ summands with $j$th coordinate $+1$ and
+$N_-=(N-b)/2$ with $j$th coordinate $-1$.
+Conditional on these counts, the sum of the remaining coordinates has
+the distribution of a sum of $N_+$ independent vectors with law
+$X_{-j}\mid X_j=+1$ and $N_-$ independent vectors with law
+$X_{-j}\mid X_j=-1$.
+It does not matter which summand indices have the two signs.
+
+Write $p_\pm=\Pp(X_j=\pm1)$ and let $\Sigma_\pm$ be these two conditional
+covariances. The weighted average
+\[
+ p_+\Sigma_++p_-\Sigma_-
+ =\Sigma_{-j,-j}-\frac{\Sigma_{-j,j}\Sigma_{j,-j}}{\Sigma_{jj}}
+ =:\Gamma
+\]
+is a Schur complement and satisfies $\Gamma\succeq\lambda I$.
+Changing the weights from $p_\pm$ to $N_\pm/N$ changes this matrix
+in operator norm by at most $C d(M+1)/\sqrt N$.
+Thus the conditional sum covariance is at least $N\lambda I/2$ under
+the stated size assumption. Apply the independent, not necessarily
+identically distributed version of the same Berry--Esseen bound.
+
+Since $X_j$ is binary, its conditional regression is exactly affine.
+The conditional mean of the normalized sum is therefore
+\[
+ \mu_{-j}+\frac{\Sigma_{-j,j}}{\Sigma_{jj}}
+                (b/\sqrt N-\mu_j),
+\]
+which is the corresponding Gaussian conditional mean.
+The binomial local estimate, obtained directly from Stirling's formula,
+is
+\[
+ \Pp(S_j=b)=\frac2{\sqrt N}
+       \phi_{\mu_j,\Sigma_{jj}}(b/\sqrt N)+O(H/N).
+\]
+Multiplying this estimate by the conditional orthant approximation proves
+\eqref{eq:face-clt}. Moving the bounded thresholds to zero has the same
+order of error.
+
+For completeness, covariance and mean comparison can be done on Gaussian
+densities before integration. A mean derivative contributes a linear
+Gaussian score and a covariance derivative contributes a quadratic score.
+Their absolute integrals on an orthant are bounded by their full-space
+absolute integrals. On a coordinate-zero face, condition on that
+coordinate first. The conditional mean and covariance are the affine
+regression and Schur complement above; their inverse norms are bounded
+by a fixed polynomial in $\lambda^{-1}$, and their means by a fixed
+polynomial in $M+1,\lambda^{-1}$. The first two conditional Gaussian
+moments consequently give the asserted polynomial Lipschitz bounds.
+All powers needed in this proof are fixed numbers, so one may enlarge
+$c_0$ once to cover all estimates.
+\end{proof}
+
+\section{Kernel calculus without high-order product expansions}
+For $\ell\in\{-1,+1\}$ define
+\[
+ \kappa_\ell(z)=\one\{\ell z>0\}+\tfrac12\one\{z=0\}.
+\]
+For $\lambda=(\lambda_0,\ldots,\lambda_d)$ and $u=(u_0,\ldots,u_{d-1})$,
+put
+\[
+ F_{\lambda,u}(z)=\prod_{s=0}^{d-1}\kappa_{\lambda_{s+1}}(z_s+u_s).
+\]
+For a Gaussian mean $\mu$ and covariance $\Sigma$, write
+\[
+ J_s(\lambda;\mu,\Sigma)
+ =\int_{\substack{z_s=0\\\lambda_{r+1}z_r\ge0\ (r\ne s)}}
+             \phi_{\mu,\Sigma}(z)\,dz_{-s}.
+\]
+In the cavity process at dimension $d=t+1$, use the abbreviation
+\[
+ \mu_r(\lambda)=\sum_{v<r}R(r,v)\lambda_v,\qquad
+ J_s^t(\lambda)=J_s(\lambda;\mu(\lambda),C_t).
+\]
+Gaussian differentiation of the path formula gives
+\begin{equation}\label{eq:response-face-identity}
+ R(t+1,s)=\frac12\sum_{\lambda\in\{-1,+1\}^{t+2}}
+          \lambda_{t+1}\lambda_{s+1}J_s^t(\lambda).
+\end{equation}
+In particular $J_t^t$ is independent of $\lambda_{t+1}$ and
+$\sum_{\lambda_0,\ldots,\lambda_t}J_t^t(\lambda)=r_{t+1}$.
+Also $0\le J_s^t(\lambda)\le(2\pi)^{-1/2}$.
+
+\begin{lemma}\label{lem:kernel-calculus}
+Under the hypotheses of Lemma \ref{lem:one-face-clt}, changing a bounded
+integer field $u$ to $v$ gives
+\[
+ \E[F_{\lambda,v}(S)-F_{\lambda,u}(S)]
+ =\frac1{\sqrt N}\sum_s(v_s-u_s)\lambda_{s+1}
+          J_s(\lambda;\mu,\Sigma)
+  +O\!\left(\frac HN\norm{v-u}_1\right).
+\]
+Here all field coordinates have absolute value at most $2$.
+For two stochastically ordered laws $P\preceq Q$ on $\{-1,+1\}^d$,
+let $P_\alpha=(1-\alpha)P+\alpha Q$, and put
+$\Delta_s=\E_QX_s-\E_PX_s\ge0$.
+The exact interpolation identity is
+\begin{align}
+ &\E_{Q^{\otimes n}}F\left(\sum_iX_i\right)
+       -\E_{P^{\otimes n}}F\left(\sum_iX_i\right)\nonumber\\
+ &\quad=n\int_0^1
+    \E\left[F(S_\alpha+Y)-F(S_\alpha+X)\right]d\alpha,
+ \label{eq:product-interpolation}
+\end{align}
+where $(X,Y)$ is any monotone coupling of $P,Q$, independent of
+$S_\alpha$, and $S_\alpha$ is the sum of $n-1$ i.i.d. $P_\alpha$ vectors.
+Consequently its leading term is
+\[
+ \sqrt n\sum_s\Delta_s\lambda_{s+1}
+        \int_0^1J_s(\lambda;\mu_\alpha,\Sigma_\alpha)\,d\alpha,
+\]
+with error bounded by $C H\sum_s\Delta_s$ when the means and covariances
+throughout the interpolation satisfy the local CLT bounds.
+Replacing $n/\sqrt{n-1}$ by $\sqrt n$ is absorbed in this error.
+\end{lemma}
+\begin{proof}
+Telescope the product defining $F$ over its time coordinates.
+At a changed coordinate the difference of the two majority kernels is
+supported on a bounded number of lattice levels. Its signed total weight
+on the lattice is $\lambda_{s+1}(v_s-u_s)/2$. Each level has the $2/\sqrt N$ prefactor in
+\eqref{eq:face-clt}. At other coordinates the factors are strict or weak
+half-line indicators or averages of these, with bounded threshold shifts.
+Apply \eqref{eq:face-clt} to each term. This proves the first assertion;
+it also covers a change of a child trajectory by taking fields $u+X,u+Y$.
+
+Differentiate $P_\alpha^{\otimes n}$ and use permutation symmetry of the
+summands to obtain \eqref{eq:product-interpolation}. Under the monotone
+coupling, $\E\norm{Y-X}_1=\sum_s\Delta_s$.
+Apply the first assertion conditionally on $X,Y$ and integrate.
+No division by a path probability is made, and no expansion into terms
+with two or more replaced children is needed.
+\end{proof}
+
+\section{Uniform finite-degree cavity estimates}
+Let $P_{k,\theta}^{u}$ denote the root trajectory law in the rooted tree
+with $k-1$ children and imposed parent trajectory $u$, as in \cite{KM}.
+Only the displayed finite prefix of this law is used. Parent coordinates
+may be $-1,0,+1$. For a prescribed root trajectory $\lambda$, the exact
+cavity recursion is
+\begin{equation}\label{eq:exact-cavity}
+ P_{k,\theta}^{u}(\lambda)
+ =\frac{1+\theta\lambda_0}{2}
+   \E\left[F_{\lambda,u}\left(\sum_{i=1}^{k-1}X_i\right)\right],
+\end{equation}
+where the $X_i$ are independent with law $P_{k,\theta}^{\lambda}$ on the
+appropriate shorter child trajectories. The notation denotes dynamics
+under an imposed trajectory, not conditioning on an observed trajectory.
+
+In the estimates below, a constant of the form
+\begin{equation}\label{eq:controlled-constant}
+ \exp\{C2^{T/2}\}
+\end{equation}
+will be called a controlled constant. Products of a fixed number of such
+constants, multiplication by $2^{CT}(T+1)^C$, and sums over $t\le T$
+remain of this form. Also, if
+$L_t\le\exp\{C2^{t/2}\}$, then
+\begin{equation}\label{eq:product-constant}
+ \prod_{t=0}^T(2L_t)
+ \le\exp\{C'2^{T/2}\}.
+\end{equation}
+This follows by summing a geometric series; it does not cost an extra
+factor $T$ in the exponent.
+
+\begin{proposition}\label{prop:unbiased-uniform}
+There is an absolute $C$ such that, for all $T$ and sufficiently large
+$k$ with $\log k\ge C2^{T/2}$, uniformly in $u$,
+\begin{align}
+ &\norm{P_{k,0}^{u}(\sigma^T\in\cdot)-\mathcal L(\tau^T)}_{\TV}
+ \le \frac{\exp\{C2^{T/2}\}}{\sqrt k},\label{eq:unbiased-tv}\\
+ &\max_{t\le T}\left|\sqrt k\,\E_{P_{k,0}^{u}}\sigma(t)
+                 -\sum_{s<t}R(t,s)u_s\right|
+ \le \frac{\exp\{C2^{T/2}\}}{\sqrt k}.
+ \label{eq:unbiased-response}
+\end{align}
+\end{proposition}
+\begin{proof}
+Let $e_t$ be the supremum over $u$ of the sum of the two errors on the
+left sides, at horizon $t$. Initially $e_0=0$.
+For prescribed $\lambda$, the child means in \eqref{eq:exact-cavity}
+obey
+\[
+ \sqrt{k-1}\,\E X_s=\mu_s(\lambda)+O(e_t+(t+1)/k).
+\]
+Their covariance differs from $C_t$ entrywise by
+$O(e_t+(t+1)/k)$. This follows from the total-variation bound on raw
+second moments and the $O(\sqrt{t+1}/\sqrt k)$ bound on the means.
+Under a bootstrap $e_t\le\lambda_{\min}(C_t)/(100(t+1))$, the covariance
+is at least $C_t/2$ in the needed eigenvalue sense and the normalized
+means are bounded by $2(t+2)$.
+
+Apply the ordinary orthant CLT in \eqref{eq:exact-cavity}, followed by
+Gaussian parameter comparison. Summing over $2^{t+2}$ root trajectories
+bounds the new total-variation error by $L_t(e_t+k^{-1/2})$, where
+\[
+ L_t\le 2^{C(t+1)}
+      \left[\frac{C(t+2)}{\lambda_{\min}(C_t)}\right]^{c_1}
+ \le\exp\{C'2^{t/2}\}
+\]
+for a fixed exponent $c_1$.
+
+For the normalized mean, subtract the recursion with $u=0$ from that
+with $u$. The zero-field mean is exactly zero by spin-flip symmetry.
+The first part of Lemma \ref{lem:kernel-calculus}, multiplied by the
+initial factor $1/2$, gives the leading term
+\[
+ \frac{1}{2\sqrt k}\sum_s u_s\lambda_{s+1}J_s^t(\lambda)
+\]
+for the trajectory-probability difference. Multiply by $\lambda_{t+1}$,
+sum over trajectories, and use \eqref{eq:response-face-identity}. The result is
+\[
+ k^{-1/2}\sum_sR(t+1,s)u_s.
+\]
+The scaled error is at most $L_t(e_t+k^{-1/2})$.
+Thus, after increasing $L_t$,
+\[
+ e_{t+1}\le L_t(e_t+k^{-1/2}).
+\]
+Equation \eqref{eq:product-constant} proves the claimed estimates.
+The degree condition, with a sufficiently large absolute constant,
+makes every obtained $e_t$ smaller than the bootstrap threshold and
+satisfies the size requirements in the local CLT. This closes the
+induction.
+\end{proof}
+
+\begin{proposition}[Uniform weak-bias amplification]\label{prop:bias-uniform}
+Fix $T$ and let $\theta$ be as in \eqref{eq:initial-bias}. Under a degree
+condition of the form \eqref{eq:degree-condition}, uniformly for $t\le T$
+and imposed parent trajectories $u$,
+\begin{equation}\label{eq:bias-amplification}
+ d_t(u):=\E_{P_{k,\theta}^{u}}\sigma(t)
+          -\E_{P_{k,0}^{u}}\sigma(t)
+ =\theta a_t k^{t/2}(1+\varepsilon_t(u)),
+ \qquad
+ |\varepsilon_t(u)|\le
+       \frac{\exp\{C2^{T/2}\}}{\sqrt k}.
+\end{equation}
+\end{proposition}
+\begin{proof}
+Write $b_t=\theta a_t k^{t/2}$ and
+$\Lambda_T=\max(1,\max_{j\le T}r_j^{-1})$.
+By Proposition \ref{prop:quantitative-cavity}, $\Lambda_T$ is a controlled
+constant. Increasing the degree constant ensures
+$\sqrt k\ge2\Lambda_T$. Hence $b_t$ is increasing, and
+\begin{equation}\label{eq:bias-size-bounds}
+ b_T=\frac8{\sqrt k},\qquad
+ b_t\le\frac{8\Lambda_T}{k}\ (t<T),\qquad
+ \sum_{s<t}b_s\le\frac{2\Lambda_T}{\sqrt k}b_t.
+\end{equation}
+The assertion at $t=0$ is exact. Bootstrap that
+$|d_s(u)/b_s-1|\le1/2$ through time $t<T$.
+
+For a prescribed root trajectory $\lambda$, apply
+\eqref{eq:product-interpolation} to the child laws
+$P=P_{k,0}^{\lambda}$ and $Q=P_{k,\theta}^{\lambda}$.
+They admit a monotone coupling using the same initial uniforms and fair
+output coins. Put $D_t=\max_{s\le t,u}d_s(u)$.
+For the interpolated child laws, the normalized-mean difference from
+$\mu(\lambda)$ is at most
+\[
+ C\bigl(e_t+\sqrt kD_t+k^{-1/2}\bigr).
+\]
+The covariance difference from $C_t$ is at most
+$C(e_t+D_t+(t+1)/k)$ entrywise. Indeed a monotone coupling gives
+\[
+ |\E_QX_sX_r-\E_PX_sX_r|\le d_s(\lambda)+d_r(\lambda),
+\]
+and the mean correction in the covariance has the same bound up to an
+absolute factor. All interpolated covariances consequently remain
+uniformly positive definite under the degree condition.
+
+Use the one-face CLT and its Gaussian parameter comparison in the
+interpolation. Separating off the change of the root's initial law gives
+\begin{align}
+ P_{k,\theta}^{u}(\lambda)-P_{k,0}^{u}(\lambda)
+ &=\frac{\sqrt k}{2}\sum_{s=0}^t
+       d_s(\lambda)\lambda_{s+1}J_s^t(\lambda)+\mathcal E_\lambda,
+ \label{eq:bias-path-expansion}\\
+ |\mathcal E_\lambda|
+ &\le\frac\theta2+
+ L_t\sqrt k\left(\sum_{s=0}^td_s(\lambda)\right)
+       \bigl(e_t+\sqrt kD_t+k^{-1/2}\bigr),
+ \label{eq:bias-path-error}
+\end{align}
+where $L_t\le\exp\{C2^{t/2}\}$.
+The finite prefactor $(k-1)/\sqrt{k-2}$ in the interpolation differs
+from $\sqrt k$ by a relative $O(k^{-1})$, which is included in this error.
+
+Multiply \eqref{eq:bias-path-expansion} by $\lambda_{t+1}$ and sum over
+root trajectories. The $s=t$ contribution has nonnegative weights:
+\[
+ \frac{\sqrt k}{2}\sum_{\lambda}d_t(\lambda)J_t^t(\lambda).
+\]
+By \eqref{eq:response-face-identity}, if
+$\eta_t=\sup_u|d_t(u)/b_t-1|$, this lies between
+$(1-\eta_t)b_{t+1}$ and $(1+\eta_t)b_{t+1}$.
+Thus the previous relative error is not multiplied by a large condition
+number.
+
+For $s<t$, use $J_s^t\le(2\pi)^{-1/2}$ and
+\eqref{eq:bias-size-bounds}. After division by $b_{t+1}$, the total
+absolute contribution is at most
+$2^{T+C}\Lambda_T^2/\sqrt k$.
+Furthermore, the bootstrap gives $D_t\le12\Lambda_T/k$ and
+$\sum_{s\le t}d_s(\lambda)\le3b_t$.
+Proposition \ref{prop:unbiased-uniform} bounds $e_t$ by a controlled
+constant divided by $\sqrt k$. Summing \eqref{eq:bias-path-error} over
+the root trajectories and dividing by $b_{t+1}$ is therefore also at most
+a controlled constant divided by $\sqrt k$. The initial-law term has this
+bound because $b_t\ge\theta$ and $r_{t+1}^{-1}\le\Lambda_T$.
+We have proved
+\[
+ \eta_{t+1}\le\eta_t+
+       \frac{\exp\{C2^{T/2}\}}{\sqrt k}.
+\]
+Summing over $t$ preserves the controlled-constant form. The degree
+condition makes the resulting error less than $1/2$, closing the
+bootstrap and proving \eqref{eq:bias-amplification}.
+\end{proof}
+
+\section{Saturation and consensus}
+\begin{proof}[Proof of Theorem \ref{thm:finite}]
+First, the lower bound on $a_T$ and a sufficiently large choice of $A$
+ensure that the initialization in \eqref{eq:initial-bias} belongs to $(0,1)$.
+At time $T$, \eqref{eq:bias-amplification} gives, uniformly in the parent
+trajectory,
+\[
+ d_T(u)=\frac8{\sqrt k}
+   \left(1+O\!\left(\frac{e^{C2^{T/2}}}{\sqrt k}\right)\right).
+\]
+At earlier times the normalized bias increments are at most a controlled
+constant divided by $\sqrt k$, by \eqref{eq:bias-size-bounds}.
+Thus the child sum in the exact cavity recursion at horizon $T+1$ has
+Gaussian mean
+\[
+ \mu(\lambda)+8\mathbf e_T+
+       O_\infty\!\left(\frac{e^{C2^{T/2}}}{\sqrt k}\right)
+\]
+and covariance $C_T$ up to an error of the same size.
+Here $\mathbf e_T$ denotes the last coordinate unit vector.
+Applying the ordinary orthant CLT and Gaussian parameter comparison shows
+that the root trajectory through $T+1$, for every imposed parent, differs
+in total variation by at most a controlled constant divided by $\sqrt k$
+from the cavity process with a field $8$ at its last update only.
+
+Its last spin is
+\[
+ \sign(H_T+8),\qquad
+ H_T=\eta(T)+\sum_{s<T}R(T,s)\tau(s).
+\]
+Equation \eqref{eq:memory-bounds} gives $\E H_T^2\le4$. Hence
+\[
+ \E\sign(H_T+8)\ge1-2\Pp(H_T\le-8)\ge1-\frac8{64}=\frac78.
+\]
+For the degree constant sufficiently large, the approximation error
+implies
+\begin{equation}\label{eq:rooted-positive}
+ \E_{P_{k,\theta}^{u}}\sigma(T+1)\ge\frac12
+ \quad\text{for every imposed parent trajectory }u.
+\end{equation}
+
+Now return to the full $k$-regular tree and fix a vertex $v$.
+In each of the $k$ components obtained by removing $v$, run a lower process
+with the parent of that component fixed at $-1$ for all times.
+These processes are independent, and their spins at the neighbors of $v$
+are simultaneously at most the spins in the original process.
+By \eqref{eq:rooted-positive} their means at time $T+1$ are at least $1/2$.
+Hoeffding's inequality gives
+\[
+ \Pp_\theta\{\sigma_v(T+2)=-1\}
+ \le\Pp\!\left\{\sum_{i=1}^k\sigma_{i,-}(T+1)\le0\right\}
+ \le e^{-k/8}.
+\]
+This includes possible ties when $k$ is even.
+Lemma 1.2 of \cite{KM} says that, for absolute $k_*,\delta_*>0$,
+$\E_\theta\sigma_v(t)>1-\delta_*/k$ at some finite time implies
+$\theta_*(k)\le\theta$. Our estimate implies this criterion for all
+sufficiently large $k$. For each fixed $k$, the selected $T=T(k)$ is
+finite, so the use of that criterion entails no uniformity in the
+finite-graph limit used in its proof. Finally, the bound on $a_T$ in
+\eqref{eq:covariance-lower} proves \eqref{eq:finite-bound}.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{thm:asymptotic}]
+Let $L=\log k$ and $\ell=\log L$. Choose a fixed, sufficiently large
+constant $b$ and set
+\[
+ T=\left\lfloor\frac2{\log2}(\ell-b)\right\rfloor.
+\]
+For sufficiently large $k$, this is nonnegative and
+\[
+ 2^{T/2}\le C e^{-b}L.
+\]
+Choose $b$ so that \eqref{eq:degree-condition} holds. Theorem
+\ref{thm:finite} then gives
+\begin{align*}
+ \log\theta_*(k)
+ &\le-\frac{T+1}{2}L+B2^{T/2}\\
+ &\le-\frac L{\log2}\ell+O(L).
+\end{align*}
+When $\theta_*(k)=0$, the same conclusion is read directly as the upper
+bound on $\theta_*(k)$ rather than as an assertion about its logarithm.
+This proves \eqref{eq:main}.
+\end{proof}
+
+\section{Scope of the estimate}
+The proof establishes an explicit upper bound for the original dynamics,
+not for an independent-neighbor surrogate. It uses monotonicity only in
+valid comparisons with imposed parent trajectories. It retains the
+response term generated by backtracking. The Gaussian local limit
+argument conditions on one coordinate count, and consequently does not
+require a lower bound on the probability of every complete trajectory.
+The bias comparison uses the exact interpolation
+\eqref{eq:product-interpolation}; no neglected higher-order product
+expansion is hidden in the critical $k^{-1/2}$ stage.
+
+The estimate does not show that the threshold is positive for large
+$k$, does not provide a matching lower bound, and does not identify its
+true decay scale. A faster explicit upper bound would follow from stronger
+long-time lower bounds on $R(t+1,t)$ and on $\lambda_{\min}(C_T)$.
+For example, polynomial-exponential control
+$\lambda_{\min}(C_T),r_T\ge e^{-C T^q}$, together with the corresponding
+quantitative propagation above, would permit a power-of-$\log k$ time
+horizon instead of a $\log\log k$ horizon. Such stronger cavity estimates
+are not assumed or proved here.
+
+\begin{thebibliography}{9}
+\bibitem{KM}
+Y. Kanoria and A. Montanari (2011).
+Majority dynamics on trees and the dynamic cavity method.
+\emph{The Annals of Applied Probability} \textbf{21}(5), 1694--1748.
+DOI: 10.1214/10-AAP729.
+
+\bibitem{Pitt}
+L. D. Pitt (1982).
+Positively correlated normal variables are associated.
+\emph{The Annals of Probability} \textbf{10}(2), 496--499.
+DOI: 10.1214/aop/1176993872.
+
+\bibitem{Bentkus}
+V. Bentkus (2005).
+A Lyapunov-type bound in $\mathbb R^d$.
+\emph{Theory of Probability and Its Applications} \textbf{49}(2), 311--323.
+DOI: 10.1137/S0040585X97981123.
+\end{thebibliography}
+\end{document}
