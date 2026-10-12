@@ -1,0 +1,1475 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{bookmark}
+
+\newcommand{\Pbb}{\mathbb P}
+\newcommand{\Ebb}{\mathbb E}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\T}{\mathbb T^2}
+\newcommand{\cM}{\mathcal M}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\diver}{\operatorname{div}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Lip}{\operatorname{Lip}}
+\newcommand{\dd}{\,\mathrm d}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\eps}{\varepsilon}
+\DeclareMathOperator*{\esssup}{ess\,sup}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\numberwithin{equation}{section}
+\setlist[enumerate]{itemsep=3pt,topsep=5pt}
+
+\title{Simultaneous quadratic-cost and bottleneck bounds\\for planar random matching}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+For two independent samples of \(N\) uniform points in the unit square,
+we construct a single matching whose total squared distance is
+\(O(\log N)\) and whose longest edge is
+\(O((\log N)^{3/4}/\sqrt N)\), with failure probability
+\(O((\log N)^{-2})\). The matching can be chosen measurably so that its
+expected quadratic cost is \(O(\log N)\) and its bottleneck bound fails
+with probability at most \(C\exp(-c(\log N)^{3/2})\). We also obtain
+these conclusions for a random sample matched to fixed evenly spread
+points.
+
+The proof combines the classical bottleneck matching theorem with a
+Fourier estimate for smoothed empirical measures. Lipschitz truncation
+of a scalar stream function gives one divergence solution with both
+an \(L^2\) bound and an \(L^\infty\) bound. A continuity equation with
+uniformly positive densities converts this field into a coupling that
+retains both estimates. Rounding preserves the distance constraint and
+produces a permutation with the required quadratic cost.
+\end{abstract}
+
+\section{Statement of the main result}\label{sec:statement}
+
+Let \(X_1,\ldots,X_N,Y_1,\ldots,Y_N\) be independent and uniformly distributed on \([0,1]^2\), and write \(d(x,y)=|x-y|\) for Euclidean distance. The set of permutations of \(\{1,\ldots,N\}\) is denoted by \(\mathfrak S_N\). We prove the following statement.
+
+\begin{theorem}\label{thm:main}
+    There are universal constants \(C_0,C_1,C_2>0\) such that, for all sufficiently large \(N\), with probability at least \(1-C_2/(\log N)^2\), there exists \(\pi\in\mathfrak S_N\) satisfying
+    \[
+        \sum_{i=1}^N d(X_i,Y_{\pi(i)})^2\le C_0\log N, \qquad \max_{1\le i\le N}d(X_i,Y_{\pi(i)}) \le \frac{C_1(\log N)^{3/4}}{\sqrt N}.
+    \]
+\end{theorem}
+\begin{remark}
+For the same permutation, Cauchy--Schwarz gives
+\[
+ \sum_{i=1}^N d(X_i,Y_{\pi(i)})
+ \le \sqrt{N\sum_{i=1}^N d(X_i,Y_{\pi(i)})^2}
+ \le \sqrt{C_0}\sqrt{N\log N}.
+\]
+Thus, with \(L=\max\{\sqrt{C_0},C_1\}\),
+\[
+ \lim_{N\to\infty}\Pbb\left(
+ \exists\pi\in\mathfrak S_N:\quad
+ \begin{aligned}
+  \sum_{i=1}^N d(X_i,Y_{\pi(i)})
+     &\le L\sqrt{N\log N},\\
+  \max_{1\le i\le N}d(X_i,Y_{\pi(i)})
+     &\le \frac{L(\log N)^{3/4}}{\sqrt N}
+ \end{aligned}
+ \right)=1.
+\]
+This is the simultaneous conclusion in \cite[Problem~5.3]{Tal26}.
+The corresponding fixed-target formulation in
+\cite[Question~4.9.1]{Tal21} is treated in
+Corollary~\ref{cor:grid}, including its expected total-distance bound.
+The full ultimate matching conjecture
+\cite[Research Problem~17.1.2]{Tal21} asks for stronger coordinatewise
+exponential integrability. Even its symmetric exponent-four case is
+not established by the quadratic-cost and maximal-distance estimates
+proved here.
+\end{remark}
+
+The total-distance and bottleneck orders separately are classical;
+see \cite[Theorems~4.5.1 and~4.7.1]{Tal21}. The unconstrained
+quadratic matching cost is also understood: Ambrosio, Stra, and
+Trevisan \cite[Theorem~1.1]{AST19} prove that its expectation is
+asymptotic to \((2\pi)^{-1}\log N\) for two uniform square samples.
+The point of Theorem~\ref{thm:main} is to obtain the quadratic order
+while imposing the bottleneck constraint on the same permutation.
+
+Ouimet's preprint \cite[Theorem~2.1]{Oui26} gives simultaneous
+total-distance and bottleneck bounds. Its planar flow interpolation
+\cite[Lemmas~2.9--2.10]{Oui26} uses a closely related stream-function
+truncation. The present quadratic estimate is stronger than that
+theorem's stated conclusion: multiplying its total-distance and
+maximal-distance bounds gives only
+\[
+ \sum_i d(X_i,Y_{\pi(i)})^2
+ \le \bigl(\max_i d(X_i,Y_{\pi(i)})\bigr)
+          \sum_i d(X_i,Y_{\pi(i)})
+ =O((\log N)^{5/4}).
+\]
+Here the conversion through smooth densities retains the
+\(L^2\) energy all the way to the final matching.
+We state the deterministic compatibility result in
+Proposition~\ref{prop:continuous}.
+In \S\ref{sec:further}, we also derive expected-cost bounds and the
+fixed-target version from the same estimates.
+
+
+\section{Reduction to the torus and proof overview}
+\label{sec:proof-structure}
+
+Let \(\T=(\R/2\Z)^2\) be the flat torus with geodesic distance
+\(d_{\T}\). Its ordinary Lebesgue measure has total mass \(4\), so
+the uniform probability density is \(1/4\). We first state the torus
+version of the matching theorem.
+
+\begin{theorem}[Matching on the torus]
+\label{thm:torus}
+Let \(X_1,\ldots,X_N,Y_1,\ldots,Y_N\) be independent uniform
+points on \(\T\). There are universal constants \(C_0,C_1,C_2>0\)
+such that, for all sufficiently large \(N\), with probability at least
+\(1-C_2/(\log N)^2\), there exists \(\pi\in\mathfrak S_N\)
+satisfying
+\[
+ \sum_{i=1}^N d_{\T}(X_i,Y_{\pi(i)})^2\le C_0\log N,
+ \qquad
+ \max_{1\le i\le N}d_{\T}(X_i,Y_{\pi(i)})
+ \le\frac{C_1(\log N)^{3/4}}{\sqrt N}.
+\]
+\end{theorem}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main} assuming Theorem~\ref{thm:torus}]
+Let \(X_1,\ldots,X_N,Y_1,\ldots,Y_N\) have the torus law in
+Theorem~\ref{thm:torus}. We fold these samples onto the square using
+the map \(F:\T\to[0,1]^2\) defined by
+\[
+ F(z_1,z_2)=
+ \bigl(d_{\R/2\Z}(z_1,0),\,d_{\R/2\Z}(z_2,0)\bigr).
+\]
+On the representatives \([-1,1)^2\), this is simply
+\(F(z_1,z_2)=(|z_1|,|z_2|)\). A uniform torus point has independent
+coordinates uniform on \([-1,1)\), whose absolute values are
+independent and uniform on \([0,1]\). Consequently,
+\(F(X_1),\ldots,F(X_N),F(Y_1),\ldots,F(Y_N)\) have exactly the
+joint distribution of the square samples in Theorem~\ref{thm:main}.
+
+Distance to a fixed point is a \(1\)-Lipschitz function on any metric
+space. Applying this fact to each circle coordinate gives
+\[
+ |F(z)-F(z')|^2
+ \le\sum_{\ell=1}^2d_{\R/2\Z}(z_\ell,z'_\ell)^2
+ =d_{\T}(z,z')^2.
+\]
+Thus every matching of the torus samples induces a matching of the
+folded samples with no increase in any edge length. On the event in
+Theorem~\ref{thm:torus}, the same permutation \(\pi\) therefore satisfies
+\[
+ \sum_{i=1}^N|F(X_i)-F(Y_{\pi(i)})|^2\le C_0\log N,
+ \qquad
+ \max_{1\le i\le N}|F(X_i)-F(Y_{\pi(i)})|
+ \le\frac{C_1(\log N)^{3/4}}{\sqrt N}.
+\]
+The event that the folded samples admit such a permutation contains
+the torus matching event, so its probability is at least
+\(1-C_2/(\log N)^2\). The equality of the joint sample laws proves
+Theorem~\ref{thm:main} with the same constants.
+\end{proof}
+
+It remains to prove Theorem~\ref{thm:torus}. We sketch its proof,
+emphasizing how the quadratic-cost and maximal-distance bounds are
+obtained for a single matching. Throughout the rest of the paper,
+\(X_1,\ldots,X_N,Y_1,\ldots,Y_N\) denote the independent uniform
+torus samples in that theorem. We first construct a coupling of two
+smooth densities and then transfer its bounds to a permutation.
+
+We smooth each empirical measure at radius
+\[
+ h=A\sqrt{\frac{\log N}{N}},
+\]
+where \(A\) is a sufficiently large fixed constant. With probability
+tending to one, the resulting densities \(\rho_0,\rho_1\) are bounded
+above and below by positive constants. Two separate constructions then
+give solutions of the equation \(\diver u=\rho_0-\rho_1\). A Fourier
+calculation yields a field \(u\) with
+\(\norm u_2^2=O(\log N/N)\). The bottleneck matching theorem, followed
+by a common smoothing of the matched endpoints, gives a coupling with
+distance cutoff \(r=O((\log N)^{3/4}/\sqrt N)\). From this coupling
+we construct another field \(v\), with the same divergence, satisfying
+\(\norm v_\infty=O(r)\).
+
+The main deterministic step combines these two fields. After subtracting
+their spatial means, the divergence-free difference \(u-v\) is the
+rotated gradient of a scalar stream function. On the set where the
+maximal function of \(\abs u\) is controlled, this stream function is
+Lipschitz with constant \(O(\norm v_\infty)\). Extending its restriction
+from that set gives a field \(w\) with the same divergence and with
+\[
+ \norm w_2^2\le C\norm u_2^2,
+ \qquad \norm w_\infty\le C\norm v_\infty.
+\]
+The area of the modified set controls the additional energy. This is
+the step that makes the two estimates compatible.
+
+We next interpolate linearly between \(\rho_0\) and \(\rho_1\), using
+\(w\) as a fixed flux. The lower density bound controls both the speed
+and the quadratic action of the resulting flow. Its endpoint coupling
+therefore has quadratic cost \(O(\log N/N)\) and distance cutoff
+\(O(r)\). Passing from the smoothed measures back to the empirical
+measures adds at most \(2h\) to the cutoff and \(O(h^2)\) to the
+normalized quadratic cost. These errors have the required sizes because
+\(h=o(r)\) and \(h^2=O(\log N/N)\). A decomposition into permutation
+matrices then selects one permutation with both bounds.
+
+The deterministic inputs are collected in \S\ref{sec:preliminaries},
+culminating in Proposition~\ref{prop:continuous}.
+In \S\ref{sec:random-inputs} we establish the density and energy
+estimates and apply the Leighton--Shor bottleneck theorem
+\cite{LS89}, in the form stated in \cite[Theorem~4.7.1]{Tal21}.
+The rounding argument in \S\ref{sec:rounding} then completes the
+proof of Theorem~\ref{thm:torus}.
+The further consequences in \S\ref{sec:further} use a matching
+that minimizes quadratic cost subject to a fixed distance cutoff.
+The density, energy, and bottleneck estimates hold together with probability at least
+\(1-C/(\log N)^2\), which gives the stated failure probability.
+Constants denoted by \(C,c>0\) may change between occurrences.
+They are independent of \(N\), and may depend on the fixed mollifier
+introduced below.
+
+\section{Preliminary inputs}
+\label{sec:preliminaries}
+
+This section develops the deterministic ingredients of the proof. The
+first lemma combines two solutions of the same divergence equation.
+The second constructs a bounded solution from a coupling with a
+distance cutoff. The third turns a field satisfying both bounds into a
+single coupling, leading to Proposition~\ref{prop:continuous}.
+The common setting and normalizations are fixed here for the remainder
+of the paper.
+
+We use the torus and geodesic distance defined in
+\S\ref{sec:proof-structure}. All spatial norms and integrals below
+are taken with respect to ordinary Lebesgue measure on \(\T\), whose
+total mass is \(4\); the uniform probability density is therefore
+\(1/4\). For an integrable scalar function or
+vector field \(g\), its spatial mean is
+\(\overline g=\frac14\int_{\T}g\). All divergence identities are
+interpreted distributionally. For integrable \(f\), the identity
+\(\diver u=f\) means
+\[
+ -\int_{\T}u\cdot\nabla\varphi\,\mathrm dx
+ =\int_{\T}f\varphi\,\mathrm dx
+ \qquad\text{for every smooth periodic test function }\varphi.
+\]
+A coupling of two probability densities is a probability measure on
+\(\T\times\T\) with those densities as its marginals. We say it has
+distance cutoff \(r\) when its support is contained in
+\(\{(x,y):d_{\T}(x,y)\le r\}\).
+
+Fix a nonnegative function \(\eta\in C_c^\infty(\R^2)\), supported
+in the unit ball and with integral one. For \(0<s<1/8\), write
+\[
+ \eta_s^{\R}(z)=s^{-2}\eta(z/s),\qquad
+ \eta_s(z)=\sum_{m\in\Z^2}\eta_s^{\R}(z+2m).
+\]
+Thus \(\eta_s\) is a smooth probability kernel on \(\T\), supported
+where \(d_{\T}(z,0)\le s\). Convolution on the torus uses ordinary
+Lebesgue measure, with
+\((\eta_s*g)(x)=\int_{\T}\eta_s(x-y)g(y)\,\mathrm dy\).
+For a finite measure the same notation denotes convolution against that
+measure. Integrals over \(\R^2\) use \(\eta_s^{\R}\), and periodic
+functions appearing in such integrals are evaluated periodically.
+No symmetry assumption on \(\eta\) is needed.
+
+\subsection{Combining two divergence solutions}
+\label{sec:interpolation}
+
+The purpose of the next lemma is to retain an \(L^2\) bound from one
+divergence solution and an \(L^\infty\) bound from another. We first
+recall the analytic estimates used in its proof. For an integrable
+function \(g\), define the periodic Hardy--Littlewood maximal function
+by
+\[
+ \cM g(x)=\sup_{s>0}\frac1{|B_{\T}(x,s)|}
+                  \int_{B_{\T}(x,s)}|g(y)|\,\mathrm dy.
+\]
+Lebesgue differentiation gives \(\abs g\le\cM g\) almost everywhere,
+and \(\cM g\le\norm g_\infty\) for bounded \(g\). The weak maximal
+inequality and \((\cM g)^2\le\cM(|g|^2)\) imply
+\[
+ \bigl|\{x\in\T:\cM g(x)>t\}\bigr|
+ \le \frac{C}{t^2}\norm g_2^2,
+ \qquad g\in L^2(\T),\quad t>0.
+\]
+We also use the pointwise Sobolev estimate
+\begin{equation}
+\label{eq:sobolev-pointwise}
+ |\psi(x)-\psi(y)|
+ \le C d_{\T}(x,y)
+ \bigl(\cM(|\nabla\psi|)(x)+\cM(|\nabla\psi|)(y)\bigr),
+ \qquad \psi\in H^1(\T),
+\end{equation}
+for every pair of Lebesgue points \(x,y\) of the chosen Sobolev
+representative. In particular, a bound on the maximal
+function of the gradient makes the restriction of \(\psi\) Lipschitz.
+
+The Euclidean version and its use in Lipschitz approximation are given
+in \cite[proof of Lemma~10, p.~236]{Haj00}. The same argument applies
+on the fixed torus. To see this, let \(\psi_B\) denote the average of
+\(\psi\) over a ball \(B\). Poincar\'e's inequality, followed by
+telescoping the averages over \(B_{\T}(x,2^{-j}s)\), gives
+\[
+ |\psi(x)-\psi_{B_{\T}(x,s)}|
+ \le Cs\,\cM(|\nabla\psi|)(x).
+\]
+For \(s=d_{\T}(x,y)\), compare the averages over
+\(B_{\T}(x,s)\) and \(B_{\T}(y,s)\) with the average over
+\(B_{\T}(x,3s)\). The volume-doubling property and Poincar\'e's
+inequality bound their difference by the right-hand side of
+\eqref{eq:sobolev-pointwise}. The preceding telescoping estimate at
+both endpoints then proves that inequality. Large radii are covered by
+the global Poincar\'e inequality on \(\T\). The periodic weak maximal
+inequality follows from the usual covering argument on this compact
+doubling space. All constants depend only on the fixed torus.
+
+\begin{lemma}[Simultaneous bounds for a divergence solution]
+\label{lem:interpolate}
+Suppose \(u\in L^2(\T;\R^2)\) and
+\(v\in L^\infty(\T;\R^2)\) have the same distributional divergence.
+There exists \(w\in L^2(\T;\R^2)\cap L^\infty(\T;\R^2)\) such
+that
+\[
+ \diver w=\diver u,\qquad
+ \norm w_2^2\le C\norm u_2^2,\qquad
+ \norm w_\infty\le C\norm v_\infty.
+\]
+\end{lemma}
+
+\begin{proof}
+We first remove the constant parts of the fields. Replacing \(u,v\)
+by \(u-\overline u,v-\overline v\) preserves their divergences, and
+\[
+ \norm{u-\overline u}_2^2=\norm u_2^2-4|\overline u|^2
+ \le\norm u_2^2,\qquad
+ \norm{v-\overline v}_\infty\le2\norm v_\infty.
+\]
+It is therefore enough to prove the result for mean-zero fields, which
+we continue to denote by \(u,v\). This reduction removes the constant
+divergence-free fields that cannot be represented by a periodic stream
+function.
+
+The field \(u-v\) belongs to \(L^2\), has zero mean, and is
+divergence free. Hence it is a rotated gradient:
+\[
+ u-v=\nabla^\perp\psi,
+ \qquad \nabla^\perp\psi=(-\partial_2\psi,\partial_1\psi),
+ \qquad \psi\in H^1(\T).
+\]
+For completeness, use the Fourier convention
+\[
+ \widehat g(k)=\frac14\int_{\T}g(z)e^{-i\pi k\cdot z}\,\mathrm dz,
+ \qquad k\in\Z^2.
+\]
+For every \(k\ne0\), the divergence condition says that
+\(\widehat{(u-v)}(k)\) is orthogonal to \(k\). With
+\(k^\perp=(-k_2,k_1)\), define
+\[
+ \widehat\psi(k)=
+ \frac{k^\perp\cdot\widehat{(u-v)}(k)}{i\pi|k|^2}
+ \quad(k\ne0),\qquad \widehat\psi(0)=0.
+\]
+The Fourier coefficient of \(\nabla^\perp\psi\) is then exactly
+\(\widehat{(u-v)}(k)\). Parseval's identity gives
+\(\norm{\nabla\psi}_2=\norm{u-v}_2\), and the absence of the zero
+mode also gives \(\psi\in L^2\). Thus this formula defines the
+required real-valued, mean-zero function in \(H^1(\T)\).
+
+Write \(B=\norm v_\infty\). If \(B=0\), the common divergence is
+zero and we take \(w=0\). Suppose \(B>0\), and define
+\[
+ G=\{x\in\T:\cM(|u|)(x)\le B\},
+\]
+intersected with the full-measure set where the representatives and
+\eqref{eq:sobolev-pointwise} are valid. On \(G\), the stream-function
+identity implies
+\[
+ \cM(|\nabla\psi|)
+ \le\cM(|u|)+\cM(|v|)\le2B.
+\]
+It follows from \eqref{eq:sobolev-pointwise} that \(\psi|_G\) is
+\(CB\)-Lipschitz with respect to \(d_{\T}\).
+
+If \(G\) is nonempty, extend this restriction by the McShane formula
+\cite[Lemma~5]{Haj00}:
+\[
+ \widetilde\psi(x)
+ =\inf_{y\in G}\{\psi(y)+CB\,d_{\T}(x,y)\}.
+\]
+Here the constant is chosen to dominate the Lipschitz constant of the
+restriction. The infimum is finite: after fixing one point of \(G\),
+the Lipschitz bound and the finite diameter of \(\T\) bound \(\psi\)
+above and below on \(G\). The same bound shows that
+\(\widetilde\psi=\psi\) on \(G\) and that
+\(\widetilde\psi\) is globally \(CB\)-Lipschitz on \(\T\).
+In particular, it is periodic and
+\(\norm{\nabla\widetilde\psi}_\infty\le CB\). If \(G\) is empty,
+set \(\widetilde\psi=0\).
+
+Define \(w=v+\nabla^\perp\widetilde\psi\). Distributional derivatives
+commute, so \(\diver\nabla^\perp\widetilde\psi=0\). Therefore
+\(\diver w=\diver v=\diver u\), and
+\(\norm w_\infty\le CB\).
+Moreover, locality of weak derivatives gives
+\(\nabla\widetilde\psi=\nabla\psi\) almost everywhere on \(G\),
+and consequently \(w=u\) there. This locality property applies to a
+measurable agreement set. Indeed, the difference of the two Sobolev
+functions has an absolutely continuous representative on almost every
+line parallel to either coordinate axis. Its derivative vanishes almost
+everywhere on its zero set on each such line; Fubini's theorem gives
+the asserted equality of the weak gradients on \(G\).
+
+The weak maximal estimate bounds the area of the set where the field
+was changed:
+\[
+ |G^c|\le \frac{C}{B^2}\norm u_2^2.
+\]
+Combining this with \(w=u\) on \(G\) and the global bound
+\(\norm w_\infty\le CB\), we obtain
+\[
+ \norm w_2^2
+ =\int_G|u|^2+\int_{G^c}|w|^2
+ \le\norm u_2^2+CB^2|G^c|
+ \le C\norm u_2^2.
+\]
+This calculation also applies when \(G\) is empty. Finally, the
+initial mean removal changes the input bounds by at most the fixed
+factors already recorded. The resulting \(w\) already has the
+divergence of the original fields, so no constant field is added back.
+\end{proof}
+
+\begin{remark}
+The exceptional set is determined by the field \(u\), whose energy is
+small, while the truncation level is determined by \(\norm v_\infty\).
+The product of the squared truncation level and the area of this set is
+at most \(C\norm u_2^2\), which is why the modification preserves the
+energy bound. Modifying a scalar stream function preserves divergence
+exactly. No bound on \(\norm v_2\) in terms of \(\norm u_2\), or on
+\(\norm u_\infty\), is required.
+
+This is an application of classical Lipschitz truncation.
+Schiffer's periodic truncation theorem for closed differential forms
+\cite[Theorem~5.1]{Sch22} implies the same simultaneous bounds for
+divergence solutions on a torus of any fixed dimension. The proof
+above gives an elementary planar argument and makes the roles of
+the two input fields explicit.
+\end{remark}
+
+\subsection{From a distance cutoff to a bounded flux}
+\label{sec:bounded-flux}
+
+We next turn a coupling with uniformly bounded displacement into a
+bounded solution of the divergence equation. The natural flux follows
+the shortest paths joining the coupled points. These paths can
+concentrate at intermediate times, so we first average their flux at
+the scale of the distance cutoff. The endpoint density bound controls
+the averaged field, and a local correction then restores its exact
+divergence.
+
+\begin{lemma}[A bounded divergence solution from a distance cutoff]
+\label{lem:bounded-flux}
+Let \(\rho_0,\rho_1\) be probability densities on \(\T\) satisfying
+\(0\le\rho_0,\rho_1\le M\) almost everywhere. Suppose a coupling
+\(\gamma\) of \(\rho_0\,\mathrm dx\) and
+\(\rho_1\,\mathrm dx\) is supported on
+\(\{(x,y):d_{\T}(x,y)\le r\}\), where \(0<r<1/8\).
+There exists \(v\in L^\infty(\T;\R^2)\) such that
+\[
+ \diver v=\rho_0-\rho_1,\qquad
+ \norm v_\infty\le CMr.
+\]
+The divergence identity holds in the sense of distributions.
+\end{lemma}
+
+\begin{proof}
+Set \(f=\rho_0-\rho_1\). For \(\gamma\)-almost every \((x,y)\),
+let \(\delta(x,y)\in\R^2\) be the shortest displacement vector from
+\(x\) to \(y\), so that \(y=x+\delta(x,y)\) modulo \(2\Z^2\).
+The restriction on \(r\) makes this vector unique, with
+\(\abs{\delta(x,y)}=d_{\T}(x,y)\le r\). All points on the path
+\(x+t\delta(x,y)\), \(0\le t\le1\), are interpreted on the torus.
+
+Define the averaged path flux by
+\[
+ V(z)=\int_{\T\times\T}
+ \delta(x,y)\int_0^1
+ \eta_r\bigl(z-x-t\delta(x,y)\bigr)\,\mathrm dt
+ \,\mathrm d\gamma(x,y).
+\]
+For fixed \(r\), the kernel and all its derivatives are bounded, so
+\(V\) is smooth and differentiation under the integral is valid.
+The identity
+\[
+ \delta(x,y)\cdot\nabla_z
+ \eta_r\bigl(z-x-t\delta(x,y)\bigr)
+ =-\frac{\mathrm d}{\mathrm dt}
+ \eta_r\bigl(z-x-t\delta(x,y)\bigr)
+\]
+therefore gives
+\begin{align*}
+ \diver V(z)
+ &=\int_{\T\times\T}
+   \bigl(\eta_r(z-x)-\eta_r(z-y)\bigr)
+   \,\mathrm d\gamma(x,y)\\
+ &=(\eta_r*\rho_0)(z)-(\eta_r*\rho_1)(z)
+  =(\eta_r*f)(z).
+\end{align*}
+Here the second equality uses the two marginals of \(\gamma\).
+
+To bound \(V\), fix \(z\). If a kernel in its defining integral is
+nonzero, then
+\(d_{\T}(z,x+t\delta(x,y))\le r\), and the triangle inequality
+implies \(d_{\T}(z,x)\le2r\). Since
+\(\norm{\eta_r}_\infty\le Cr^{-2}\), we obtain
+\begin{align*}
+ |V(z)|
+ &\le Cr^{-2}r\,
+   \gamma\bigl(B_{\T}(z,2r)\times\T\bigr)\\
+ &=Cr^{-1}\int_{B_{\T}(z,2r)}\rho_0(x)\,\mathrm dx
+ \le CMr.
+\end{align*}
+In the last step we used the area bound
+\(\abs{B_{\T}(z,2r)}\le Cr^2\). Thus the estimate only involves
+the mass of starting endpoints near \(z\); no density bound on the
+intermediate path locations is needed.
+
+It remains to correct the difference between \(f\) and its
+convolution. Define the periodic vector field
+\[
+ A_f(z)=\int_{\R^2}\eta_r^{\R}(a)\,a
+ \int_0^1 f(z-ta)\,\mathrm dt\,\mathrm da.
+\]
+This expression defines an essentially bounded field because
+\(f\in L^\infty\) and \(\eta_r^{\R}\) is supported on
+\(\abs a\le r\). We verify its divergence directly, so that no
+derivative of \(f\) is required. For a smooth periodic test function
+\(\varphi\), translation invariance of Lebesgue measure and Fubini's
+theorem give
+\begin{align*}
+ -\int_{\T}A_f(z)\cdot\nabla\varphi(z)\,\mathrm dz
+ &=-\int_{\R^2}\eta_r^{\R}(a)
+   \int_{\T}f(q)\int_0^1
+   a\cdot\nabla\varphi(q+ta)\,\mathrm dt\,\mathrm dq\,\mathrm da\\
+ &=\int_{\R^2}\eta_r^{\R}(a)
+   \int_{\T}f(q)\bigl(\varphi(q)-\varphi(q+a)\bigr)
+   \,\mathrm dq\,\mathrm da\\
+ &=\int_{\T}\bigl(f(z)-(\eta_r*f)(z)\bigr)
+   \varphi(z)\,\mathrm dz.
+\end{align*}
+For the last equality, translate \(z=q+a\) in the term containing
+\(\varphi(q+a)\) and use the definition of periodization. Consequently,
+\(\diver A_f=f-\eta_r*f\) in distributions. This identity uses only
+the unit integral of the mollifier and is valid without any symmetry
+assumption on it.
+
+Finally, \(\norm f_\infty\le M\), and hence
+\[
+ \norm{A_f}_\infty
+ \le\norm f_\infty
+     \int_{\R^2}\eta_r^{\R}(a)\abs a\,\mathrm da
+ \le Mr.
+\]
+The field \(v=V+A_f\) has divergence \(f\) and satisfies
+\(\norm v_\infty\le CMr\), as claimed.
+\end{proof}
+
+\subsection{A single coupling from both flux bounds}
+\label{sec:flow}
+
+The final deterministic input converts a vector field with controlled
+energy and supremum norm into one coupling with the corresponding
+cost and distance bounds. A positive lower bound on the two endpoint
+densities permits a linear interpolation between them. Dividing the
+fixed flux by this interpolated density gives a velocity field whose
+speed and quadratic action are both controlled. This is the
+Dacorogna--Moser interpolation used for quadratic transport, as in
+\cite[Proposition~2.3]{AST19}; we record its simultaneous
+distance-cutoff conclusion and the approximation argument needed here.
+
+\begin{lemma}[A coupling with controlled distance and quadratic cost]
+\label{lem:flow}
+Let \(\rho_0,\rho_1\) be probability densities on \(\T\) satisfying
+\(\rho_0,\rho_1\ge a>0\) almost everywhere. Suppose
+\(w\in L^2(\T;\R^2)\cap L^\infty(\T;\R^2)\) satisfies
+\(\diver w=\rho_0-\rho_1\) in distributions. Then there is a coupling
+\(\Gamma\) of \(\rho_0\,\mathrm dx\) and
+\(\rho_1\,\mathrm dx\) such that
+\[
+ \supp\Gamma\subseteq
+ \{(x,y):d_{\T}(x,y)\le a^{-1}\norm w_\infty\},
+ \qquad
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)
+ \le a^{-1}\norm w_2^2.
+\]
+\end{lemma}
+
+\begin{proof}
+First suppose that the densities and the field are smooth. For
+\(0\le t\le1\), set
+\[
+ \rho_t=(1-t)\rho_0+t\rho_1,\qquad
+ b_t=\frac{w}{\rho_t}.
+\]
+The interpolation satisfies \(\rho_t\ge a\) and has total mass one
+at every time. Moreover, \(\rho_tb_t=w\), so the divergence assumption
+is exactly the continuity equation
+\[
+ \partial_t\rho_t+\diver(\rho_tb_t)
+ =(\rho_1-\rho_0)+\diver w=0.
+\]
+The field \(b_t\) is smooth on the compact torus, and hence its flow
+\(F_t\) exists for \(0\le t\le1\) and consists of diffeomorphisms,
+with \(F_0(x)=x\) and
+\(\partial_tF_t(x)=b_t(F_t(x))\).
+
+We check that the flow carries the prescribed densities. Its Jacobian
+satisfies
+\(\partial_t\det DF_t(x)
+ =(\diver b_t)(F_t(x))\det DF_t(x)\). Thus the continuity equation
+implies
+\[
+ \frac{\mathrm d}{\mathrm dt}
+ \bigl(\rho_t(F_t(x))\det DF_t(x)\bigr)
+ =\bigl(\partial_t\rho_t+\diver(\rho_tb_t)\bigr)(F_t(x))
+  \det DF_t(x)=0.
+\]
+Evaluating at \(t=0\) gives
+\(\rho_t(F_t(x))\det DF_t(x)=\rho_0(x)\). Change of variables
+therefore yields
+\((F_t)_\#(\rho_0\,\mathrm dx)=\rho_t\,\mathrm dx\).
+In particular,
+\[
+ \Gamma=(\mathrm{id},F_1)_\#(\rho_0\,\mathrm dx)
+\]
+is a coupling of the required endpoint measures.
+
+The geodesic distance between the endpoints of a trajectory is at most
+its length. Since \(\norm{b_t}_\infty\le a^{-1}\norm w_\infty\),
+every initial point satisfies
+\[
+ d_{\T}(x,F_1(x))
+ \le\int_0^1|b_t(F_t(x))|\,\mathrm dt
+ \le a^{-1}\norm w_\infty.
+\]
+This gives the support constraint for \(\Gamma\). For the same
+trajectory, Cauchy--Schwarz on the unit time interval gives
+\(d_{\T}(x,F_1(x))^2
+ \le\int_0^1|b_t(F_t(x))|^2\,\mathrm dt\).
+Integrating this inequality against the initial density and using
+the pushforward identity at each time yields
+\begin{align*}
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)
+ &\le\int_0^1\int_{\T}
+       |b_t(F_t(x))|^2\rho_0(x)\,\mathrm dx\,\mathrm dt\\
+ &=\int_0^1\int_{\T}|b_t(y)|^2\rho_t(y)
+       \,\mathrm dy\,\mathrm dt\\
+ &=\int_0^1\int_{\T}\frac{|w(y)|^2}{\rho_t(y)}
+       \,\mathrm dy\,\mathrm dt
+ \le a^{-1}\norm w_2^2.
+\end{align*}
+The support and cost estimates thus hold for the same flow coupling.
+
+For general data, let
+\(\rho_i^\eps=\eta_\eps*\rho_i\), \(i=0,1\), and
+\(w^\eps=\eta_\eps*w\). Convolving with the same nonnegative
+probability kernel preserves total mass, the lower bound
+\(\rho_i^\eps\ge a\), and the identity
+\(\diver w^\eps=\rho_0^\eps-\rho_1^\eps\).
+Young's inequality also gives
+\(\norm{w^\eps}_2\le\norm w_2\) and
+\(\norm{w^\eps}_\infty\le\norm w_\infty\).
+The smooth argument therefore produces couplings \(\Gamma_\eps\)
+whose support and quadratic cost satisfy the stated bounds with the
+original norms of \(w\), uniformly in \(\eps\).
+
+Because \(\T\times\T\) is compact, a subsequence of
+\(\Gamma_\eps\) converges weakly to a probability measure \(\Gamma\)
+as \(\eps\downarrow0\). The approximate-identity property gives
+\(\rho_i^\eps\to\rho_i\) in \(L^1(\T)\); testing against continuous
+functions of either coordinate identifies the marginals of \(\Gamma\)
+as \(\rho_0\,\mathrm dx\) and \(\rho_1\,\mathrm dx\).
+The common constraint set
+\(\{(x,y):d_{\T}(x,y)\le a^{-1}\norm w_\infty\}\) is closed,
+so the limit is supported on this set. Finally,
+\(d_{\T}(x,y)^2\) is bounded and continuous, and hence its integral
+converges along the subsequence. The quadratic-cost bound passes to
+\(\Gamma\) as well.
+\end{proof}
+
+Combining the three lemmas gives the deterministic statement used in
+the proof of the main theorem. The upper density bound converts the
+initial distance cutoff into a bounded flux, while the lower density
+bound controls the speed and action of the final interpolation.
+
+\begin{proposition}[Combining quadratic energy and bounded displacement]
+\label{prop:continuous}
+Let \(\rho_0,\rho_1\) be probability densities on \(\T\) with
+\(a\le\rho_0,\rho_1\le M\) almost everywhere, where \(a>0\).
+Suppose a coupling of these densities is supported on
+\(\{(x,y):d_{\T}(x,y)\le r\}\) for some \(0<r<1/8\), and suppose
+\(u\in L^2(\T;\R^2)\) satisfies
+\(\diver u=\rho_0-\rho_1\) in distributions.
+There is a coupling \(\Gamma\) such that
+\[
+ \supp\Gamma\subseteq
+ \{(x,y):d_{\T}(x,y)\le C(M/a)r\},
+ \qquad
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)
+ \le\frac Ca\norm u_2^2.
+\]
+\end{proposition}
+
+\begin{proof}
+Lemma~\ref{lem:bounded-flux} supplies a field \(v\) with
+\(\diver v=\rho_0-\rho_1\) and \(\norm v_\infty\le CMr\).
+Apply Lemma~\ref{lem:interpolate} to \(u\) and \(v\) to obtain a
+field \(w\) satisfying
+\[
+ \diver w=\rho_0-\rho_1,\qquad
+ \norm w_2^2\le C\norm u_2^2,\qquad
+ \norm w_\infty\le CMr.
+\]
+Lemma~\ref{lem:flow}, applied to this single field, gives a coupling
+whose distance cutoff is at most \(C(M/a)r\) and whose quadratic
+cost is at most \(Ca^{-1}\norm u_2^2\).
+\end{proof}
+
+\section{Regularizing independent uniform samples}
+\label{sec:random-inputs}
+
+We now verify the hypotheses of Proposition~\ref{prop:continuous} for
+smoothed empirical measures of the torus samples in
+Theorem~\ref{thm:torus}. We use \(\Pbb,\Ebb\) for their joint law
+and expectation. With the mollifier fixed in
+\S\ref{sec:preliminaries}, set
+\[
+ \mu_X=\frac1N\sum_{i=1}^N\delta_{X_i},\qquad
+ \mu_Y=\frac1N\sum_{j=1}^N\delta_{Y_j},\qquad
+ \rho_0=\eta_h*\mu_X,\qquad
+ \rho_1=\eta_h*\mu_Y,
+ \qquad
+ h=A\sqrt{\frac{\log N}{N}}.
+\]
+We choose \(A\) once and for all as in Lemma~\ref{lem:density}, and
+take \(N\) sufficiently large that \(h<1/8\). The three estimates
+below supply, respectively, the positive density bounds, a divergence
+solution with small energy, and a coupling with a distance cutoff.
+
+\subsection{Uniform bounds on the densities}
+
+\begin{lemma}
+\label{lem:density}
+For a sufficiently large fixed \(A\),
+\[
+ \Pbb\left(\frac18\le\rho_0,\rho_1\le\frac38
+ \text{ everywhere on }\T\right)\ge1-CN^{-2}
+\]
+for all sufficiently large \(N\).
+\end{lemma}
+
+\begin{proof}
+For a fixed \(z\), the summands \(\eta_h(z-X_i)\) are independent,
+with
+\[
+ \Ebb\eta_h(z-X_i)=\frac14,\qquad
+ 0\le\eta_h(z-X_i)\le Ch^{-2},\qquad
+ \Var(\eta_h(z-X_i))\le Ch^{-2}.
+\]
+For example, the variance bound follows from
+\(\Ebb\eta_h(z-X_i)^2=\frac14\int_{\T}\eta_h^2\le Ch^{-2}\).
+Bernstein's inequality gives
+\[
+ \Pbb\left(\left|\rho_0(z)-\frac14\right|>\frac1{16}\right)
+ \le 2\exp(-cNh^2).
+\]
+
+Deterministically, \(\norm{\nabla\rho_0}_\infty\le Ch^{-3}\).
+Choose a torus net of mesh \(c_1h^3\), with \(c_1>0\) sufficiently
+small. It has at most \(Ch^{-6}\) points, and the density changes
+by at most \(1/16\) between an arbitrary point and its nearest
+net point. A union bound therefore gives
+\[
+ \Pbb\left(\sup_{z\in\T}
+ \left|\rho_0(z)-\frac14\right|>\frac18\right)
+ \le Ch^{-6}\exp(-cNh^2).
+\]
+The same argument applies to \(\rho_1\). Since
+\(Nh^2=A^2\log N\) and \(h^{-6}\le C_A N^3\), choosing \(A\)
+large enough makes the combined failure probability at most
+\(CN^{-2}\).
+\end{proof}
+
+\subsection{A quadratic-energy estimate}
+
+\begin{lemma}
+\label{lem:energy}
+Let \(f=\rho_0-\rho_1\), and define
+\[
+ u=-\nabla(-\Delta)^{-1}f
+\]
+using the inverse Laplacian on mean-zero periodic functions. Then
+\(\overline u=0\), \(\diver u=f\), and, for a fixed sufficiently
+large \(C\),
+\[
+ \Pbb\left(\norm u_2^2>C\frac{\log N}{N}\right)
+ \le \frac{C}{(\log N)^2}.
+\]
+\end{lemma}
+
+\begin{proof}
+The inverse Laplacian is well defined because both densities have
+integral one, so \(f\) has zero mean. We estimate both the mean and
+the variance of the energy. With the
+Fourier convention fixed in \S\ref{sec:interpolation}, Parseval's
+identity reads \(\norm g_2^2=4\sum_{k\in\Z^2}|\widehat g(k)|^2\).
+For the fixed function \(\eta\) on \(\R^2\), write
+\(\widehat\eta(\xi)=\int_{\R^2}\eta(z)e^{-i\xi\cdot z}\,\mathrm dz\).
+The Fourier coefficient of its periodic smoothing kernel is
+\(\widehat{\eta_h}(k)=\frac14\widehat\eta(\pi hk)\).
+
+Pool the \(2N\) points as \(Z_1,\ldots,Z_{2N}\), and put
+\(\eps_a=1\) for \(a\le N\) and \(\eps_a=-1\) for \(a>N\).
+Then
+\[
+ \widehat f(k)=
+ \frac{\widehat\eta(\pi hk)}{4N}
+ \sum_{a=1}^{2N}\eps_a e^{-i\pi k\cdot Z_a},
+ \qquad
+ \widehat f(0)=0.
+\]
+The eigenvalue of \(-\Delta\) at nonzero frequency \(k\) is
+\(\pi^2|k|^2\). Parseval's identity therefore gives
+\begin{equation}
+\label{eq:energy-kernel}
+ E_h:=\norm u_2^2
+ =\frac1{N^2}\sum_{a,b=1}^{2N}
+   \eps_a\eps_b K_h(Z_a-Z_b),
+\end{equation}
+where the real, even, mean-zero kernel \(K_h\) is
+\[
+ K_h(z)=\frac1{4\pi^2}
+ \sum_{k\in\Z^2\setminus\{0\}}
+ \frac{|\widehat\eta(\pi hk)|^2}{|k|^2}e^{i\pi k\cdot z}.
+\]
+
+The coefficients of \(K_h\) are unchanged by \(k\mapsto-k\), since
+\(\eta\) is real and
+\(\widehat\eta(-\xi)=\overline{\widehat\eta(\xi)}\). Thus \(K_h\)
+is real and even without requiring \(\eta\) itself to be symmetric.
+Since \(|\widehat\eta|\le1\) and \(\widehat\eta\) decays faster than
+any power, the two-dimensional lattice sum gives
+\[
+ K_h(0)\le C\bigl(1+\log(1/h)\bigr).
+\]
+Indeed, summing \(|k|^{-2}\) over \(1\le|k|\le h^{-1}\)
+gives \(O(1+\log(1/h))\). Beyond \(h^{-1}\), the Fourier
+decay bounds the remaining sum by a constant.
+
+The diagonal part of \eqref{eq:energy-kernel} is the deterministic
+quantity \(2K_h(0)/N\). All off-diagonal terms have expectation
+zero, because \(Z_a-Z_b\) is uniform on \(\T\) and \(K_h\) has
+zero mean. Hence
+\[
+ \Ebb E_h=\frac{2K_h(0)}N
+ \le C\frac{\log N}{N}.
+\]
+
+An expectation estimate alone would not yield the desired conclusion
+with a fixed constant. To control its fluctuations, let \(Z,Z'\)
+be independent uniform torus points. Parseval gives
+\[
+ \Ebb K_h(Z-Z')^2
+ =\frac1{16\pi^4}
+ \sum_{k\ne0}\frac{|\widehat\eta(\pi hk)|^4}{|k|^4}
+ \le C.
+\]
+Distinct unordered pairs \(\{a,b\}\) and \(\{c,d\}\) give
+uncorrelated off-diagonal terms. They are independent if they
+have no common index. If, for example, they share \(a=c\)
+and their other indices differ, conditioning on \(Z_a\) shows
+that both conditional means are zero and the remaining variables
+are independent. Since \(K_h\) is even, we obtain exactly
+\[
+ \Var(E_h)
+ =\frac4{N^4}\binom{2N}{2}\Ebb K_h(Z-Z')^2
+ \le \frac C{N^2}.
+\]
+Choose the threshold constant strictly larger than the constant in
+the expectation bound. Chebyshev's inequality then gives
+\[
+ \Pbb\left(E_h>C\frac{\log N}{N}\right)
+ \le\frac{C/N^2}{(\log N/N)^2}
+ \le\frac C{(\log N)^2},
+\]
+as required.
+\end{proof}
+
+\subsection{The bottleneck input and common smoothing}
+
+\begin{lemma}[Bottleneck matching input]
+\label{lem:bottleneck}
+There are universal constants \(b,c,C>0\) such that independent
+uniform samples on \(\T\) satisfy
+\[
+ \Pbb\left(
+ \exists \sigma\in\mathfrak S_N:
+ \max_i d_{\T}(X_i,Y_{\sigma(i)})
+ \le b\,\frac{(\log N)^{3/4}}{\sqrt N}
+ \right)
+ \ge1-C\exp\bigl(-c(\log N)^{3/2}\bigr).
+\]
+\end{lemma}
+
+\begin{proof}
+We first work in the unit square. The Leighton--Shor theorem
+\cite{LS89}, as stated in \cite[Theorem~4.7.1]{Tal21}, matches an
+independent uniform sample to any fixed evenly spread family of \(N\)
+points with radius at most \(C(\log N)^{3/4}/\sqrt N\) and failure
+probability at most \(C\exp(-c(\log N)^{3/2})\).
+
+We specify a reference family valid for every \(N\). In the definition
+of \cite[\S4.3]{Tal21}, the square is partitioned into \(N\) rectangles
+of area \(1/N\), each containing its prescribed point and lying within
+distance \(10/\sqrt N\) of that point. To construct such a partition,
+let \(m=\lfloor\sqrt N\rfloor\) and choose integers
+\(n_1,\ldots,n_m\), differing by at most one, whose sum is \(N\).
+Make row \(j\) have height \(n_j/N\), and divide it into \(n_j\)
+rectangles of width \(1/n_j\). Each rectangle has area \(1/N\).
+Since \(m\le n_j\le m+2\), its width is at most \(2/\sqrt N\)
+and its height is at most \(3/\sqrt N\). Its diameter is therefore
+at most \(\sqrt{13}/\sqrt N\), so the rectangle centers meet the
+cited definition.
+
+Apply the theorem to each sample using these same centers. If
+\(\tau_X,\tau_Y\) map the two samples to the reference family, then
+\(\sigma=\tau_Y^{-1}\circ\tau_X\) matches the samples to each other.
+The triangle inequality increases the radius by at most a factor two,
+and a union bound adds the two failure probabilities.
+
+Finally, represent the uniform torus points in \([-1,1)^2\) and map
+this square to \([0,1)^2\) by scaling and translation. The preceding
+argument gives a matching whose Euclidean edge lengths in the original
+representatives are bounded by twice the unit-square bound. Torus
+distance is at most the Euclidean distance between representatives.
+Absorbing these fixed factors into \(b,c,C\) proves the lemma.
+\end{proof}
+
+For the remainder of the proof, let
+\[
+ r=b\,\frac{(\log N)^{3/4}}{\sqrt N}.
+\]
+For all sufficiently large \(N\), we have \(r<1/8\).
+If \(\sigma\) is the matching in Lemma~\ref{lem:bottleneck},
+define a coupling of the smoothed densities by using the same
+shift at its two endpoints:
+\begin{equation}
+\label{eq:common-shift}
+ \gamma=\frac1N\sum_{i=1}^N
+ \int_{\R^2}\eta_h^{\R}(z)\,
+ \delta_{(X_i+z,\;Y_{\sigma(i)}+z)}\,\mathrm dz.
+\end{equation}
+All points are understood modulo \(2\Z^2\).
+The marginals are \(\rho_0\,\mathrm dx,\rho_1\,\mathrm dx\).
+Translation invariance gives
+\(d_{\T}(X_i+z,Y_{\sigma(i)}+z)=d_{\T}(X_i,Y_{\sigma(i)})\),
+so \(\gamma\) has the same cutoff \(r\).
+
+\section{Returning to a permutation}
+\label{sec:rounding}
+
+To complete the proof of Theorem~\ref{thm:torus}, we pass from a
+coupling of the smoothed densities to a matching of the original torus
+sample points. The conditional weights below assign each
+smoothed location to its empirical source. This gives a fractional
+matching supported on short edges. The Birkhoff--von Neumann theorem
+then selects a permutation while preserving that support and controlling
+the quadratic cost by averaging.
+
+\begin{lemma}[Rounding with a distance cutoff]
+\label{lem:rounding}
+Let \(X_i,Y_j\in\T\), and let
+\(\rho_0=\eta_h*\mu_X\) and \(\rho_1=\eta_h*\mu_Y\) be positive.
+Suppose a coupling \(\Gamma\) of these densities satisfies
+\[
+ \supp\Gamma\subseteq\{d_{\T}(x,y)\le D\},
+ \qquad
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)\le E.
+\]
+There is a permutation \(\pi\in\mathfrak S_N\) such that
+\[
+ \max_i d_{\T}(X_i,Y_{\pi(i)})\le2h+D,\qquad
+ \frac1N\sum_i d_{\T}(X_i,Y_{\pi(i)})^2
+ \le3(2h^2+E).
+\]
+\end{lemma}
+
+\begin{proof}
+The conditional weights
+\[
+ \alpha_i(x)=\frac{\eta_h(x-X_i)}{N\rho_0(x)},
+ \qquad
+ \beta_j(y)=\frac{\eta_h(y-Y_j)}{N\rho_1(y)}
+\]
+are nonnegative and satisfy
+\(\sum_i\alpha_i(x)=\sum_j\beta_j(y)=1\).
+Define the matrix
+\[
+ p_{ij}=\int_{\T\times\T}
+ \alpha_i(x)\beta_j(y)\,\mathrm d\Gamma(x,y).
+\]
+Its row and column sums are \(1/N\). For example,
+\[
+ \sum_jp_{ij}=\int_{\T}\alpha_i(x)\rho_0(x)\,\mathrm dx
+ =\frac1N\int_{\T}\eta_h(x-X_i)\,\mathrm dx=\frac1N.
+\]
+
+Wherever \(\alpha_i(x)\beta_j(y)>0\), the smoothing kernel implies
+\(d_{\T}(X_i,x)\le h\) and \(d_{\T}(Y_j,y)\le h\). Thus
+\[
+ p_{ij}>0\quad\Longrightarrow\quad
+ d_{\T}(X_i,Y_j)\le2h+D.
+\]
+The squared triangle inequality, integrated against the same
+conditional weights, gives
+\begin{align*}
+ \sum_{i,j}p_{ij}d_{\T}(X_i,Y_j)^2
+ &\le3\int\sum_{i,j}\alpha_i(x)\beta_j(y)
+ \bigl(d_{\T}(X_i,x)^2+d_{\T}(x,y)^2
+       +d_{\T}(y,Y_j)^2\bigr)\,\mathrm d\Gamma\\
+ &\le3(2h^2+E).
+\end{align*}
+
+The matrix \(Np\) is doubly stochastic. By the
+Birkhoff--von Neumann theorem \cite{Bir46}, it is a convex combination
+of permutation matrices. Every permutation with positive weight uses
+only edges for which \(p_{ij}>0\): a zero matrix entry cannot be a
+positive convex combination of nonnegative entries. Therefore all
+permutations in the decomposition satisfy the stated cutoff.
+At least one of them has normalized quadratic cost at most
+\(\sum_{i,j}p_{ij}d_{\T}(X_i,Y_j)^2\), because that sum is the
+weighted average of their normalized costs.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:torus}]
+Intersect the events of Lemmas~\ref{lem:density},
+\ref{lem:energy}, and \ref{lem:bottleneck}. Their intersection has
+probability at least
+\[
+ 1-CN^{-2}-\frac C{(\log N)^2}
+   -C\exp\bigl(-c(\log N)^{3/2}\bigr)
+ \ge1-\frac C{(\log N)^2}
+\]
+for all sufficiently large \(N\). No independence between these
+three events is required.
+
+On this event, \(\rho_0,\rho_1\) lie between \(a=1/8\) and
+\(M=3/8\), the field \(u\) has energy at most \(C\log N/N\),
+and \eqref{eq:common-shift} is a coupling with cutoff \(r\).
+Proposition~\ref{prop:continuous} gives a single coupling
+\(\Gamma\) such that
+\[
+ \supp\Gamma\subseteq\{d_{\T}(x,y)\le Cr\},
+ \qquad
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)
+ \le C\frac{\log N}{N}.
+\]
+Apply Lemma~\ref{lem:rounding}. Since
+\[
+ h^2=A^2\frac{\log N}{N},
+ \qquad
+ \frac hr=\frac{A}{b(\log N)^{1/4}}\longrightarrow0,
+\]
+it gives one permutation satisfying
+\[
+ \sum_i d_{\T}(X_i,Y_{\pi(i)})^2\le C\log N,
+ \qquad
+ \max_i d_{\T}(X_i,Y_{\pi(i)})\le Cr.
+\]
+Since \(r=b(\log N)^{3/4}/\sqrt N\), choosing fixed
+\(C_0,C_1,C_2\) large enough in the cost, cutoff, and
+failure-probability bounds proves Theorem~\ref{thm:torus}.
+\end{proof}
+
+\section{Expected cost and evenly spread targets}
+\label{sec:further}
+
+The preceding argument also controls the expected cost of a single
+matching while retaining the stronger probability estimate supplied by
+the bottleneck theorem. The same method applies when one sample is
+replaced by a fixed evenly spread family. In both cases, a finite
+optimization rule makes the choice of permutation measurable.
+
+\subsection{Expected cost and the bottleneck probability}
+
+\begin{corollary}
+\label{cor:expected}
+In the square model of Theorem~\ref{thm:main}, there are universal
+constants \(C,c>0\) and a measurable choice of
+\(\pi\in\mathfrak S_N\) such that, for all sufficiently large \(N\),
+\[
+ \Ebb\sum_{i=1}^N d(X_i,Y_{\pi(i)})^2\le C\log N,
+\]
+and
+\[
+ \Pbb\left(
+  \max_i d(X_i,Y_{\pi(i)})>
+  C\frac{(\log N)^{3/4}}{\sqrt N}
+ \right)
+ \le C\exp\bigl(-c(\log N)^{3/2}\bigr).
+\]
+The same choice of \(\pi\) satisfies both bounds in
+Theorem~\ref{thm:main} with probability at least
+\(1-C/(\log N)^2\). In particular,
+\[
+ \Ebb\sum_{i=1}^N d(X_i,Y_{\pi(i)})
+ \le C\sqrt{N\log N}.
+\]
+\end{corollary}
+
+\begin{proof}
+Recall \(r=b(\log N)^{3/4}/\sqrt N\), and fix a sufficiently large
+universal constant \(L\). For each pair of square samples, choose a
+permutation minimizing the total squared cost among those whose longest
+edge is at most \(Lr\). Break ties by a fixed lexicographic order, and
+choose the identity permutation if this constraint is infeasible.
+There are only finitely many permutations, and the feasibility and cost
+of each are continuous inequalities in the sample coordinates.
+Consequently, this rule is measurable. We choose \(L\) below, uniformly
+in \(N\).
+
+To analyze the rule, let
+\(Z_1,\ldots,Z_N,Z'_1,\ldots,Z'_N\) be independent uniform torus
+points. The arrays \((F(Z_i))_{i=1}^N\) and
+\((F(Z'_i))_{i=1}^N\) have the joint law of the square samples.
+Let \(\rho_0,\rho_1\) and \(E_h\) denote their torus smoothing
+densities and Poisson energy, as in \S\ref{sec:random-inputs}. Let
+\(\mathcal B\) be the torus bottleneck event from
+Lemma~\ref{lem:bottleneck}, and set
+\[
+ \mathcal D=\left\{\frac18\le\rho_0,\rho_1\le\frac38\right\}.
+\]
+The existing estimates give
+\[
+ \Pbb(\mathcal D^c)\le CN^{-2},\qquad
+ \Pbb(\mathcal B^c)
+ \le C\exp\bigl(-c(\log N)^{3/2}\bigr),\qquad
+ \Ebb E_h\le C\frac{\log N}{N}.
+\]
+
+On \(\mathcal B\cap\mathcal D\), the proof of
+Theorem~\ref{thm:torus}, without imposing the energy event, constructs
+a torus permutation with cutoff \(Cr+2h\) and total squared cost
+at most \(CN(E_h+h^2)\). Indeed,
+Proposition~\ref{prop:continuous} bounds the coupling cost by \(CE_h\),
+and Lemma~\ref{lem:rounding} then gives this estimate. Folding does
+not increase any edge length. Since \(h=o(r)\), a fixed sufficiently
+large \(L\) makes this square permutation feasible for the selection
+rule, whose cost is therefore at most \(CN(E_h+h^2)\).
+
+On \(\mathcal B\cap\mathcal D^c\), fold the original bottleneck
+permutation instead. It has cutoff \(r\) and total squared cost at
+most \(Nr^2\), so the selected permutation has no greater cost.
+Thus the cutoff constraint is feasible on all of \(\mathcal B\).
+On \(\mathcal B^c\), the selected permutation still has total squared
+cost at most \(2N\), since the squared diameter of the unit square
+is \(2\). Taking expectations gives
+\begin{align*}
+ \Ebb\sum_i d(X_i,Y_{\pi(i)})^2
+ &\le CN(\Ebb E_h+h^2)
+      +Nr^2\Pbb(\mathcal D^c)+2N\Pbb(\mathcal B^c)\\
+ &\le C\log N.
+\end{align*}
+Here \(Nh^2=O(\log N)\), \(Nr^2=O((\log N)^{3/2})\), and
+\(N\exp(-c(\log N)^{3/2})\to0\).
+
+Feasibility on \(\mathcal B\) proves the claimed bottleneck
+probability. On
+\(\mathcal B\cap\mathcal D\cap\{E_h\le C\log N/N\}\), the
+same selected permutation also has total squared cost at most
+\(C\log N\). Lemmas~\ref{lem:density}, \ref{lem:energy}, and
+\ref{lem:bottleneck} bound the probability of its complement by
+\(C/(\log N)^2\). Finally, Cauchy--Schwarz, first for the sum and
+then for expectation, gives
+\[
+ \Ebb\sum_i d(X_i,Y_{\pi(i)})
+ \le\sqrt{N\,\Ebb\sum_i d(X_i,Y_{\pi(i)})^2}
+ \le C\sqrt{N\log N}.
+\]
+\end{proof}
+
+\subsection{Matching to fixed evenly spread points}
+
+We call a fixed family \(Y_1,\ldots,Y_N\in[0,1]^2\)
+\emph{evenly spread} if there is a measurable partition
+\(Q_1,\ldots,Q_N\) of the square such that
+\[
+ |Q_j|=\frac1N,\qquad
+ \sup_{y\in Q_j}|y-Y_j|\le\frac{10}{\sqrt N},
+ \qquad 1\le j\le N.
+\]
+This includes the rectangular partitions in the definition used in
+\cite[\S4.3]{Tal21}. Only the displayed area and distance conditions
+are needed below.
+
+\begin{corollary}
+\label{cor:grid}
+Let \(Y_1,\ldots,Y_N\) be a fixed evenly spread family, and let
+\(X_1,\ldots,X_N\) be independent uniform points in the unit square.
+There are universal constants \(C,c>0\), independent of the fixed
+family, and a measurable choice \(\pi=\pi(X_1,\ldots,X_N)\) such
+that, for all sufficiently large \(N\),
+\[
+ \Pbb\left(
+  \sum_i d(X_i,Y_{\pi(i)})^2\le C\log N,
+  \quad
+  \max_i d(X_i,Y_{\pi(i)})
+  \le C\frac{(\log N)^{3/4}}{\sqrt N}
+ \right)
+ \ge1-\frac{C}{(\log N)^2}.
+\]
+The same choice satisfies
+\[
+ \Ebb\sum_i d(X_i,Y_{\pi(i)})^2\le C\log N,
+ \qquad
+ \Ebb\sum_i d(X_i,Y_{\pi(i)})\le C\sqrt{N\log N},
+\]
+and
+\[
+ \Pbb\left(
+  \max_i d(X_i,Y_{\pi(i)})>
+  C\frac{(\log N)^{3/4}}{\sqrt N}
+ \right)
+ \le C\exp\bigl(-c(\log N)^{3/2}\bigr).
+\]
+\end{corollary}
+
+\begin{proof}
+Let \(Z_1,\ldots,Z_N\) be independent uniform torus points, so that
+\((F(Z_i))_{i=1}^N\) has the law of the square sample. We first
+couple the smoothed torus sample to uniform torus measure. Set
+\[
+ \rho_0=\eta_h*\left(\frac1N\sum_i\delta_{Z_i}\right),
+ \qquad \rho_1=\frac14,\qquad
+ u=-\nabla(-\Delta)^{-1}(\rho_0-\tfrac14),
+ \qquad E_h=\norm u_2^2.
+\]
+The proof of Lemma~\ref{lem:density} gives
+\[
+ \Pbb(\mathcal D^c)\le CN^{-2},
+ \qquad
+ \mathcal D=\left\{\frac18\le\rho_0\le\frac38\right\}.
+\]
+The Fourier calculation in Lemma~\ref{lem:energy}, with \(N\)
+unsigned points in place of \(2N\) signed points, gives
+\[
+ E_h=\frac1{N^2}\sum_{a,b=1}^N K_h(Z_a-Z_b).
+\]
+The kernel \(K_h\) is the same real, even, mean-zero kernel as
+before. Its diagonal contribution is deterministic, and distinct
+unordered off-diagonal pairs are uncorrelated. Consequently,
+\[
+ \Ebb E_h=\frac{K_h(0)}N\le C\frac{\log N}{N},
+ \qquad
+ \Var(E_h)=\frac4{N^4}\binom N2
+       \Ebb K_h(Z-Z')^2\le\frac C{N^2},
+\]
+where \(Z,Z'\) are independent uniform torus points. Chebyshev's
+inequality therefore gives
+\[
+ \Pbb\left(E_h>C\frac{\log N}{N}\right)
+ \le\frac C{(\log N)^2}
+\]
+for a sufficiently large fixed \(C\).
+
+Write \(s=10/\sqrt N\). The rectangular construction in the proof
+of Lemma~\ref{lem:bottleneck}, scaled to the torus, gives a fixed
+partition \(\widetilde Q_1,\ldots,\widetilde Q_N\) into cells of
+ordinary area \(4/N\), with centers \(q_j\), such that
+\(d_{\T}(y,q_j)\le Cs\) for \(y\in\widetilde Q_j\).
+Apply the one-sample Leighton--Shor theorem
+\cite[Theorem~4.7.1]{Tal21} to these centers as in that proof.
+After increasing the universal constant \(b\) in the definition of
+\(r\), if necessary, this gives an event \(\mathcal B\) with
+\[
+ \Pbb(\mathcal B^c)
+ \le C\exp\bigl(-c(\log N)^{3/2}\bigr)
+\]
+on which some \(\sigma\in\mathfrak S_N\) satisfies
+\(\max_i d_{\T}(Z_i,q_{\sigma(i)})\le r\).
+On this event, the measure
+\[
+ \Lambda=\frac1N\sum_i\delta_{Z_i}\otimes
+ \left(\frac N4\mathbf1_{\widetilde Q_{\sigma(i)}}(y)
+       \,\mathrm dy\right)
+\]
+couples the torus empirical measure to \(\mathrm dy/4\) and has
+cutoff \(r+Cs\). Average its common translates
+\((x,y)\mapsto(x+a,y+a)\) against
+\(\eta_h^{\R}(a)\,\mathrm da\). The first marginal becomes
+\(\rho_0\,\mathrm dx\), the second remains \(\mathrm dy/4\),
+and translation invariance preserves the cutoff \(r+Cs\).
+
+Since \(s=o(r)\) and \(r+Cs<1/8\) for sufficiently large \(N\),
+Proposition~\ref{prop:continuous} applies on
+\(\mathcal B\cap\mathcal D\). It supplies a coupling \(\Gamma\)
+of \(\rho_0\,\mathrm dx\) and \(\mathrm dy/4\) such that
+\[
+ \supp\Gamma\subseteq\{d_{\T}(x,y)\le Cr\},
+ \qquad
+ \int d_{\T}(x,y)^2\,\mathrm d\Gamma(x,y)\le CE_h.
+\]
+To round this coupling to the prescribed square targets, use their
+partition \(Q_1,\ldots,Q_N\) and define
+\[
+ \alpha_i(x)=\frac{\eta_h(x-Z_i)}{N\rho_0(x)},
+ \qquad
+ p_{ij}=\int\alpha_i(x)\mathbf1_{Q_j}(F(y))
+              \,\mathrm d\Gamma(x,y).
+\]
+The row sums are \(1/N\), as in Lemma~\ref{lem:rounding}. The
+column sums are also \(1/N\), because
+\[
+ \sum_i p_{ij}
+ =\frac14\int_{\T}\mathbf1_{Q_j}(F(y))\,\mathrm dy
+ =|Q_j|=\frac1N.
+\]
+Here we used that folding sends uniform torus measure to uniform
+square measure. On the support of a contributing weight,
+\[
+ |F(Z_i)-Y_j|
+ \le d_{\T}(Z_i,x)+d_{\T}(x,y)+s
+ \le h+Cr+s.
+\]
+The same squared triangle inequality as before gives
+\[
+ \sum_{i,j}p_{ij}|F(Z_i)-Y_j|^2
+ \le3(h^2+CE_h+s^2).
+\]
+The Birkhoff argument in Lemma~\ref{lem:rounding} therefore produces
+a square permutation with cutoff \(h+Cr+s\) and total squared
+cost at most \(CN(E_h+h^2+s^2)\).
+
+We also need a fallback that does not require \(\mathcal D\).
+On all of \(\mathcal B\), round \(\Lambda\) directly by using
+instead the matrix
+\[
+ p_{ij}=\frac14\int_{\widetilde Q_{\sigma(i)}}
+                   \mathbf1_{Q_j}(F(y))\,\mathrm dy.
+\]
+Its row and column sums are again \(1/N\). If \(p_{ij}>0\), then
+\[
+ |F(Z_i)-Y_j|\le r+Cs+s\le Cr.
+\]
+Thus Birkhoff rounding gives a permutation with cutoff \(Cr\) and
+total squared cost at most \(CNr^2\), regardless of the smoothed
+density bounds.
+
+Choose the square permutation by minimizing total squared cost under
+the cutoff \(Lr\), for a fixed universal \(L\) large enough to
+include both constructions above. Break ties lexicographically and
+use the identity permutation when the constraint is infeasible. This
+is the finite measurable selection rule used in
+Corollary~\ref{cor:expected}; in particular, it depends only on
+the square sample and the fixed targets, not on a choice of torus
+lift. The folded sample law allows us to analyze it using the torus
+construction.
+
+On \(\mathcal B\cap\mathcal D\), optimality bounds its cost by
+\(CN(E_h+h^2+s^2)\). On
+\(\mathcal B\cap\mathcal D^c\), the fallback bounds its cost by
+\(CNr^2\); on \(\mathcal B^c\), its cost is at most \(2N\).
+It follows that
+\begin{align*}
+ \Ebb\sum_i d(X_i,Y_{\pi(i)})^2
+ &\le CN(\Ebb E_h+h^2+s^2)
+       +CNr^2\Pbb(\mathcal D^c)+2N\Pbb(\mathcal B^c)\\
+ &\le C\log N.
+\end{align*}
+The expected total-distance bound follows by Cauchy--Schwarz.
+The cutoff constraint is feasible on \(\mathcal B\), which gives
+the stated bottleneck probability. Finally, on
+\(\mathcal B\cap\mathcal D\cap\{E_h\le C\log N/N\}\), the
+same permutation has total squared cost at most \(C\log N\).
+The probability of the complement is at most \(C/(\log N)^2\),
+proving the remaining assertion. All constants used the fixed target
+family only through the bound \(s=10/\sqrt N\), so they are
+uniform over all such families.
+\end{proof}
+
+\begin{thebibliography}{9}
+
+\bibitem{AST19}
+L.~Ambrosio, F.~Stra, and D.~Trevisan,
+\emph{A PDE approach to a 2-dimensional matching problem},
+Probability Theory and Related Fields \textbf{173} (2019), 433--477.
+\href{https://doi.org/10.1007/s00440-018-0837-x}{doi:10.1007/s00440-018-0837-x}.
+
+\bibitem{LS89}
+T.~Leighton and P.~Shor,
+\emph{Tight bounds for minimax grid matching with applications to the
+average-case analysis of algorithms},
+Combinatorica \textbf{9} (1989), 161--187.
+
+\bibitem{Tal21}
+M.~Talagrand,
+\emph{Upper and Lower Bounds for Stochastic Processes:
+Decomposition Theorems}, second edition,
+Ergebnisse der Mathematik und ihrer Grenzgebiete, vol.~60,
+Springer, 2021.
+\href{https://michel.talagrand.net/ULBSPRINGER.pdf}{Author's PDF}.
+
+\bibitem{Tal26}
+M.~Talagrand,
+\emph{My favorite problems}, preprint, 2026.
+\href{https://michel.talagrand.net/Korea15.pdf}{Author's PDF},
+Problem~5.3 and Conjecture~5.8 in the version cited.
+
+\bibitem{Oui26}
+F.~Ouimet,
+\emph{A solution to Problem 5.3 in Talagrand's My favorite problems:
+Simultaneous sum and bottleneck bounds for random planar matchings},
+preprint, 2026, version~2.
+\href{https://doi.org/10.13140/RG.2.2.26527.93606/2}{doi:10.13140/RG.2.2.26527.93606/2}.
+
+\bibitem{Sch22}
+S.~Schiffer,
+\emph{\(L^\infty\)-truncation of closed differential forms},
+Calculus of Variations and Partial Differential Equations
+\textbf{61} (2022), article~135.
+\href{https://doi.org/10.1007/s00526-022-02236-1}{doi:10.1007/s00526-022-02236-1}.
+
+\bibitem{Haj00}
+P.~Haj{\l}asz,
+\emph{Sobolev mappings, co-area formula and related topics},
+in \emph{Proceedings on Analysis and Geometry},
+Sobolev Institute Press, Novosibirsk, 2000, pp.~227--254.
+\href{https://sites.pitt.edu/~hajlasz/OriginalPublications/Hajlasz-Sobolev-ProceedingsOnAnalysisAndGeometry-2000-227-254.pdf}{Author's PDF}.
+
+\bibitem{Bir46}
+G.~Birkhoff,
+\emph{Tres observaciones sobre el \'algebra lineal},
+Universidad Nacional de Tucum\'an, Revista, Serie A
+\textbf{5} (1946), 147--151.
+
+\end{thebibliography}
+\end{document}
