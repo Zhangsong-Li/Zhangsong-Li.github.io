@@ -1,0 +1,1696 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+\input{theme}
+\graphicspath{{figures/}}
+
+\definecolor{seed5}{HTML}{8C5A3C}
+\definecolor{pc1}{HTML}{F4A261}
+\definecolor{pc2}{HTML}{2A9D8F}
+\definecolor{pc3}{HTML}{E76F51}
+\definecolor{pc4}{HTML}{8AB17D}
+\definecolor{pc5}{HTML}{E9C46A}
+\definecolor{pc6}{HTML}{9B7EDE}
+\definecolor{pc7}{HTML}{5FA8D3}
+\definecolor{pc8}{HTML}{F28482}
+
+\tikzset{
+  pics/person/.style={code={
+    \fill[#1] (0,0.17) circle (0.072);
+    \fill[#1] (-0.125,-0.04) .. controls (-0.125,0.07) and (-0.06,0.085) .. (0,0.085)
+      .. controls (0.06,0.085) and (0.125,0.07) .. (0.125,-0.04) -- cycle;}},
+}
+
+\newcommand{\minitree}[3]{% shift x, shift y, list of edges "x1/y1/x2/y2"
+  \begin{scope}[shift={(#1,#2)}]
+    \foreach \xa/\ya/\xb/\yb in {#3} { \draw[tre] (\xa,\ya)--(\xb,\yb); \node[tn] at (\xb,\yb) {}; }
+    \node[trt] at (0,0) {};
+  \end{scope}}
+
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\tikzset{tn/.style={circle, fill=kgreen, inner sep=0pt, minimum size=1.5mm},
+  trt/.style={rectangle, fill=ink, inner sep=0pt, minimum size=1.9mm},
+  tre/.style={draw=ink!80, line width=0.6pt}}
+
+% outline slide: \outlineslide{k} highlights section k
+\newcommand{\outlineitem}[3]{\item \ifnum#1=#2 \textcolor{titleblue}{\textbf{#3}}\else \textcolor{kgray}{#3}\fi}
+\newcommand{\outlineslide}[1]{%
+  \begin{frame}{Outline}
+    \vspace{9mm}
+    \begin{enumerate}\setlength{\itemsep}{1.05em}
+      \outlineitem{#1}{1}{Graph matching: motivation and background}
+      \outlineitem{#1}{2}{Correlated random geometric graphs and our result}
+      \outlineitem{#1}{3}{The algorithm: counting seeded paths}
+      \outlineitem{#1}{4}{Analysis: concentration and the latent geometry}
+      \outlineitem{#1}{5}{Lower bounds and open problems}
+    \end{enumerate}
+  \end{frame}}
+
+% references slide helpers (refhead)
+\newcommand{\rh}[1]{\par\vspace{1.2mm}{\scriptsize\bfseries #1\par}\vspace{0.4mm}}
+\newcommand{\rr}[1]{{\tiny #1\par}}
+% summary / future: a small picture next to each item
+\newcommand{\iconrow}[2]{\par\noindent\begin{minipage}[c]{0.15\textwidth}\centering #1\end{minipage}\hfill\begin{minipage}[c]{0.83\textwidth}\raggedright #2\end{minipage}\par}
+
+
+\title{Matching Correlated Random Geometric Graphs}
+\author{Shuangping Li}
+
+\begin{document}
+
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+\centering
+\vspace*{5mm}
+{\fontsize{18}{22}\selectfont\color{titleblue}Matching Correlated Random Geometric Graphs\par}
+\vspace{4mm}
+{\normalsize\color{titleblue}Shuangping Li\par}
+\vspace{0.3mm}
+{\footnotesize\color{titleblue}Yale Statistics \& Data Science\par}
+\vspace{3mm}
+{\footnotesize Joint work with \ Dong Huang (Tsinghua University), \ Ankang Jiao (Peking University),\\[0.3mm] and \ Zhangsong Li (Peking University)\par}
+\vspace{4.5mm}
+\begin{tikzpicture}
+  \node[inner sep=0pt] (s) at (0,0) {\includegraphics[height=2.7cm]{title_sphere.pdf}};
+  \node[inner sep=0pt] (p) at (3.3,0) {\includegraphics[height=2.7cm]{title_plane.pdf}};
+  \node[inner sep=0pt] (a) at (6.6,0) {\includegraphics[height=2.7cm]{title_A.pdf}};
+  \node[inner sep=0pt] (b) at (9.9,0) {\includegraphics[height=2.7cm]{title_B.pdf}};
+\end{tikzpicture}
+\par\vspace{4mm}
+{\scriptsize\bfseries Probabilistic Phenomena on Graphs, Groups, and Manifolds\par}
+{\scriptsize Simons Institute\par}
+\vspace{1.6mm}
+{\tiny\color{kgray}Graph Matching in Random Geometric Graphs \textbf{I}: Efficient Algorithms, arXiv:2610.16675
+\quad\textperiodcentered\quad \textbf{II}: Information-Theoretic Limits\par}
+\end{frame}
+}
+
+
+% ===================================================================
+% PART 1: GRAPH MATCHING
+% ===================================================================
+
+\outlineslide{1}
+
+\begin{frame}{Motivating example: from X to Bluesky}
+\vspace{1mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.54\textwidth}
+\centering
+\includegraphics[width=\linewidth]{bluesky_activity.pdf}
+
+\vspace{0.6mm}
+{\tiny\color{kgray}Daily active users on Bluesky; the colors show when the users joined.\\ Data: Seckin et al.\ 2025 (CC BY 4.0).\par}
+\end{column}
+\begin{column}{0.43\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.75em}
+\item Bluesky grew in \kw{waves}: its public launch, Brazil's ban of X, a change to X's blocking policy, the US election. \ 30 million accounts by the end of January 2025 \ct{Seckin et al.\ 25}
+\item<2-> 276,431 academics on X, followed through 2023--24 \ct{Quelle Denker Garg Bovet 25}:
+ \begin{itemize}\small
+ \item 18\% moved to Bluesky;
+ \item a contact who moved the day before \kw{more than doubles} one's daily chance of moving;
+ \item those who quickly reconnect with their former contacts stay longer.
+ \end{itemize}
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Linking the two networks}
+\vspace{1mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.44\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.92]
+  \tikzset{pp/.style={circle, fill=ink!70, inner sep=0pt, minimum size=2.1mm},
+           hx/.style={font=\tiny, text=ink!80},
+           hb/.style={font=\tiny, text=kblue}}
+  % ---------------- follow graph on X
+  \node[font=\small] at (1.1,3.05) {on X};
+  \foreach \i/\x/\y in {1/0.1/1.9,2/1.1/2.45,3/2.1/1.95,4/0.5/0.95,5/1.6/1.0,6/0.15/0.05,7/1.95/0.1}
+    \coordinate (x\i) at (\x,\y);
+  \foreach \i/\j in {1/2,2/3,1/4,2/4,2/5,3/5,4/5,4/6,5/7,6/7,3/7}
+    \draw[ink!45, line width=0.6pt] (x\i)--(x\j);
+  \foreach \i in {1,...,7} \node[pp] at (x\i) {};
+  \node[hx, above=0.5mm of x1] {@ann\_l};
+  \node[hx, above=0.5mm of x2] {@bo};
+  \node[hx, above=0.5mm of x3] {@cara};
+  \node[hx, left=0.4mm of x4] {@dkim};
+  \node[hx, right=0.4mm of x5] {@eve};
+  \node[hx, below=0.5mm of x6] {@fz};
+  \node[hx, below=0.5mm of x7] {@gus};
+  % ---------------- follow graph on Bluesky (same people, drawn elsewhere)
+  \begin{scope}[shift={(3.0,0)}]
+  \node[font=\small, text=kblue] at (1.1,3.05) {on Bluesky};
+  \foreach \i/\x/\y in {1/1.95/0.1,2/1.15/1.15,3/0.15/0.1,4/2.1/1.95,5/0.4/1.25,6/1.15/2.45,7/0.1/2.2}
+    \coordinate (b\i) at (\x,\y);
+  \foreach \i/\j in {1/2,2/3,1/4,2/4,2/5,3/5,4/5,4/6,5/7,6/7,1/5}
+    \draw[kblue!55, line width=0.6pt] (b\i)--(b\j);
+  \foreach \i in {1,...,7} \node[pp, fill=kblue!80] at (b\i) {};
+  \node[hb, below=0.5mm of b1] {@ann.bsky};
+  \node[hb, right=0.4mm of b2] {@liubo};
+  \node[hb, below=0.5mm of b3] {@cara};
+  \node[hb, right=0.4mm of b4] {@dan.kim};
+  \node[hb, left=0.4mm of b5] {@eve};
+  \node[hb, above=0.5mm of b6] {@fzhang};
+  \node[hb, above=0.5mm of b7] {@gus.k};
+  \end{scope}
+  \node[font=\Large, text=ink!60] at (2.62,2.75) {?};
+\end{tikzpicture}
+
+\vspace{1mm}
+{\scriptsize\color{kgray}The same people, with different handles. Most follows are rebuilt.\par}
+\end{column}
+\begin{column}{0.53\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.7em}
+\item \lab{Social science}: who moved, did communities move together, which ties were rebuilt? \ This needs a \kw{link} from each person's X account to their Bluesky account \ct{Quelle et al.\ 25}
+\item<2-> Names are \bad{unreliable}: only 53\% keep the same handle. \ But people \good{rebuild their networks}, so the two follow graphs are \kw{correlated graphs} on (mostly) the same people. \ Link them by \kw{graph matching}.
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Applications}
+\vspace{3mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.32\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.95]
+  \tikzset{prot/.style={ellipse, minimum width=3.3mm, minimum height=2.3mm, inner sep=0pt}}
+  \foreach \i/\x/\y/\c in {1/0/0.2/pc2,2/0.6/0.0/pc5,3/0.35/0.7/pc3,4/0.95/0.85/pc7,5/1.2/0.25/pc4,6/0.15/1.25/pc6}
+    \node[prot, fill=\c!80] (p\i) at (\x,\y) {};
+  \foreach \i/\j in {1/2,1/3,2/3,3/4,2/5,4/5,3/6}
+    \draw[ink!50, line width=0.6pt] (p\i)--(p\j);
+  \begin{scope}[shift={(2.0,0)}]
+  \foreach \i/\x/\y/\c in {1/0.1/0.25/pc2,2/0.75/0.05/pc5,3/0.4/0.75/pc3,4/1.05/0.95/pc7,5/1.25/0.35/pc4,6/0.0/1.2/pc6}
+    \node[prot, fill=\c!80] (q\i) at (\x,\y) {};
+  \foreach \i/\j in {1/2,1/3,3/4,2/5,4/5,3/6,1/6}
+    \draw[ink!50, line width=0.6pt] (q\i)--(q\j);
+  \end{scope}
+  \node[font=\scriptsize, text=kgray] at (0.6,-0.45) {human};
+  \node[font=\scriptsize, text=kgray] at (2.65,-0.45) {mouse};
+  \draw[-{Latex[length=1.6mm]}, ink!55, line width=0.7pt] (1.4,1.45) to[bend left=25] (2.15,1.45);
+\end{tikzpicture}
+
+\vspace{1mm}
+\textbf{Computational biology}\\[0.3mm]
+{\small which proteins of two species correspond?}\\[0.5mm]
+\cts{Singh Xu Berger 08; Kazemi et al.\ 16}
+\end{column}
+\begin{column}{0.32\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.95]
+  % two stick figures in different poses, with corresponding landmarks
+  \begin{scope}[shift={(0.6,0)}]
+    \draw[ink!60, line width=0.9pt] (0,1.25) circle (0.17);
+    \draw[ink!60, line width=0.9pt] (0,1.08)--(0,0.45) (0,0.95)--(-0.45,0.6) (0,0.95)--(0.45,1.25) (0,0.45)--(-0.3,-0.05) (0,0.45)--(0.32,-0.05);
+    \fill[pc3] (0,1.25) circle (1.05mm); \fill[pc2] (-0.45,0.6) circle (1.05mm); \fill[pc7] (0.45,1.25) circle (1.05mm);
+    \fill[pc6] (-0.3,-0.05) circle (1.05mm); \fill[pc4] (0.32,-0.05) circle (1.05mm);
+  \end{scope}
+  \begin{scope}[shift={(2.75,0)}]
+    \draw[ink!60, line width=0.9pt] (0.05,1.25) circle (0.17);
+    \draw[ink!60, line width=0.9pt] (0.05,1.08)--(0,0.45) (0.02,0.95)--(-0.5,1.15) (0.02,0.95)--(0.5,0.65) (0,0.45)--(-0.42,0.05) (0,0.45)--(0.2,-0.08);
+    \fill[pc3] (0.05,1.25) circle (1.05mm); \fill[pc2] (-0.5,1.15) circle (1.05mm); \fill[pc7] (0.5,0.65) circle (1.05mm);
+    \fill[pc6] (-0.42,0.05) circle (1.05mm); \fill[pc4] (0.2,-0.08) circle (1.05mm);
+  \end{scope}
+  \node[font=\scriptsize, text=kgray] at (0.6,-0.45) {pose 1};
+  \node[font=\scriptsize, text=kgray] at (2.75,-0.45) {pose 2};
+  \draw[-{Latex[length=1.6mm]}, ink!55, line width=0.7pt] (1.3,1.6) to[bend left=25] (2.15,1.6);
+\end{tikzpicture}
+
+\vspace{1mm}
+\textbf{Computer vision}\\[0.3mm]
+{\small which points of two scans correspond?}\\[0.5mm]
+\cts{L\"ahner et al.\ 16}
+\end{column}
+\begin{column}{0.32\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.95, font=\scriptsize]
+  \tikzset{wd/.style={draw=ink!50, rounded corners=1.5pt, fill=paleO, inner sep=1.6pt}}
+  \node[wd] (w1) at (0.55,1.15) {chased};
+  \node[wd] (w2) at (0,0.25) {dog};
+  \node[wd] (w3) at (1.1,0.25) {cat};
+  \draw[ink!60] (w1)--node[left,font=\tiny,text=kgray]{subj}(w2);
+  \draw[ink!60] (w1)--node[right,font=\tiny,text=kgray]{obj}(w3);
+  \begin{scope}[shift={(2.15,0)}]
+  \node[wd] (v1) at (0.55,1.15) {pursued};
+  \node[wd] (v2) at (0,0.25) {cat};
+  \node[wd] (v3) at (1.1,0.25) {dog};
+  \draw[ink!60] (v1)--node[left,font=\tiny,text=kgray]{obj}(v2);
+  \draw[ink!60] (v1)--node[right,font=\tiny,text=kgray]{by}(v3);
+  \end{scope}
+  \node[font=\scriptsize, text=kgray] at (0.55,-0.45) {sentence 1};
+  \node[font=\scriptsize, text=kgray] at (2.7,-0.45) {sentence 2};
+  \draw[-{Latex[length=1.6mm]}, ink!55, line width=0.7pt] (1.45,1.5) to[bend left=25] (2.2,1.5);
+\end{tikzpicture}
+
+\vspace{1mm}
+\textbf{Natural language}\\[0.3mm]
+{\small which words of two sentences correspond?}\\[0.5mm]
+\cts{Haghighi Ng Manning 05}
+\end{column}
+\end{columns}
+
+\vspace{7mm}
+\uncover<2->{%
+\begin{itemize}
+\item Two networks describe related systems, but there are \bad{no common labels} (different species, different scans, different words).
+\item What is shared is the \kw{pattern of connections}, and it may reveal the correspondence.
+\end{itemize}}
+\end{frame}
+
+\begin{frame}{Graph matching}
+Given two graphs on the same $n$ vertices, find the \kw{hidden correspondence} between them.
+
+\vspace{1.5mm}
+\centering
+\begin{tikzpicture}[scale=0.82]
+  \tikzset{va0/.style={circle, draw=cA, fill=paleA, line width=0.7pt, minimum size=5.2mm, inner sep=0pt},
+           vb0/.style={circle, draw=cB, fill=paleB, line width=0.7pt, minimum size=5.2mm, inner sep=0pt}}
+  % ----- graph A
+  \foreach \i/\x/\y in {1/0/0,2/1.3/0.4,3/2.5/0,4/0.3/1.4,5/1.5/1.6,6/2.7/1.3,7/0.8/2.6,8/2.2/2.7}
+    \coordinate (a\i) at (\x,\y);
+  \foreach \i/\j in {1/2,2/3,1/4,2/5,3/6,4/5,5/6,4/7,5/8,7/8,6/8,2/4}
+    \draw[eA] (a\i) -- (a\j);
+  \foreach \i in {1,...,8}
+    \node[va0, alt=<2->{fill=pc\i!75, draw=ink}{}] at (a\i) {};
+  \node[font=\large, text=cA] at (1.35,3.45) {$A$};
+  % ----- graph B (rotated drawing)
+  \begin{scope}[shift={(6.0,0)}, rotate around={105:(1.35,1.35)}]
+    \foreach \i/\x/\y in {1/0.1/0.05,2/1.25/0.5,3/2.45/-0.1,4/0.25/1.5,5/1.55/1.55,6/2.8/1.25,7/0.85/2.55,8/2.15/2.8}
+      \coordinate (b\i) at (\x,\y);
+    \foreach \i/\j in {1/2,2/3,1/4,2/5,4/5,5/6,4/7,5/8,7/8,6/8,2/4,1/5}
+      \draw[eB] (b\i) -- (b\j);
+  \end{scope}
+  \foreach \i in {1,...,8}
+    \node[vb0, alt=<2->{fill=pc\i!75, draw=ink}{}] at (b\i) {};
+  \node[font=\large, text=cB] at (7.35,3.45) {$B$};
+  % ----- the unknown map
+  \draw[flow, line width=0.9pt, ink!70] (3.55,1.35) -- node[above, font=\normalsize]{$\pi$\,?} (5.0,1.35);
+  \node[visible on=<2->, font=\footnotesize, text=ink, align=center] at (4.27,0.5)
+    {same color\\ $=$ same vertex};
+\end{tikzpicture}
+
+\vspace{1.5mm}
+\raggedright
+\uncover<3->{%
+\begin{kboxplain}
+A natural formulation: relabel $B$ to have \kw{as many edges in common with $A$} as possible,
+\[
+  \max_{\pi\in\mathfrak S_n}\ \sum_{i<j} A_{ij}\,B_{\pi(i)\pi(j)}.
+\]
+\vspace{-2mm}
+
+{\footnotesize\color{kgray}For the random models below, this is the maximum likelihood estimator.\par}
+\end{kboxplain}}
+\end{frame}
+
+
+\begin{frame}{Worst-case hardness}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.56\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.9em}
+\item $n!$ possible correspondences \ ($100!\approx10^{158}$).
+\item Maximizing the overlap is a \kw{quadratic assignment problem} \ct{Koopmans Beckmann 57}. \ It is \bad{NP-hard}, even to approximate \ct{Makarychev Manokaran Sviridenko 14}
+\item<2-> Even if $A$ and $B$ are identical up to relabeling (\kw{graph isomorphism}), the best known algorithm is \bad{quasi-polynomial} \ct{Babai 16}
+\end{itemize}
+\end{column}
+\begin{column}{0.40\textwidth}
+\centering
+\uncover<2->{%
+\begin{tikzpicture}[scale=0.95]
+  \tikzset{gv/.style={circle, draw=ink, fill=paleA, line width=0.6pt, minimum size=3.6mm, inner sep=0pt}}
+  % K_{3,3} drawn as two rows
+  \foreach \i/\x in {1/0,2/0.8,3/1.6} {\coordinate (a\i) at (\x,1.5); \coordinate (b\i) at (\x,0);}
+  \foreach \i in {1,2,3} \foreach \j in {1,2,3} \draw[cA, line width=0.7pt] (a\i)--(b\j);
+  \foreach \i in {1,2,3} {\node[gv] at (a\i) {}; \node[gv] at (b\i) {};}
+  % K_{3,3} drawn as a hexagon with its long diagonals
+  \begin{scope}[shift={(3.55,0.75)}]
+    \foreach \k in {0,...,5} \coordinate (h\k) at (90-60*\k:0.85);
+    \foreach \k in {0,...,5} {\pgfmathtruncatemacro{\kk}{mod(\k+1,6)} \draw[cB, line width=0.7pt] (h\k)--(h\kk);}
+    \draw[cB, line width=0.7pt] (h0)--(h3) (h1)--(h4) (h2)--(h5);
+    \foreach \k in {0,...,5} \node[gv, fill=paleB] at (h\k) {};
+  \end{scope}
+  \node[font=\Large, text=ink!60] at (2.25,0.75) {$\overset{?}{=}$};
+  \node[font=\scriptsize, align=center, text=ink] at (2.1,-0.7) {the same graph, relabeled?\\ (here: yes)};
+\end{tikzpicture}}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Average-case graph matching}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.56\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.6em}
+\item Beyond the worst case, it is natural to look at the \kw{average case}: two random graphs, correlated through a hidden $\pi$. \ Recover $\pi$ from the graphs alone.
+\item<2-> Two questions. \ \lab{Statistical}: can $\pi$ be recovered at all? \ \lab{Computational}: can it be recovered efficiently?
+\item<4-> Challenging even for simple random models. \ The most studied is the \kw{correlated \ER model} \ct{Pedarsani Grossglauser 11}. \ Although idealized, it took many years of work and shows a \kw{rich range of phenomena}.
+\end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+\centering
+\uncover<3->{%
+\begin{tikzpicture}[scale=0.78]
+  \tikzset{lv/.style={circle, draw=ink, line width=0.6pt, minimum size=4.4mm, inner sep=0pt, font=\scriptsize}}
+  % graph A
+  \node[lv, fill=white] (h) at (0,0) {$h$};
+  \node[lv, fill=pc7!55] (x1) at (-0.75,0.75) {}; \node[lv, fill=pc6!55] (x2) at (0.75,0.75) {};
+  \node[lv, fill=seed4!55] (u) at (-0.95,-0.9) {$u$};
+  \node[lv, fill=seed2!55] (v) at (0,-1.1) {$v$};
+  \node[lv, fill=seed1!55] (w) at (0.95,-0.9) {$w$};
+  \draw[eA] (h)--(x1) (h)--(x2) (x1)--(x2) (h)--(u);
+  \draw[eA, line width=1.6pt] (h)--(v);
+  \node[text=cA, font=\small] at (-1.55,0.1) {$A$};
+  % graph B
+  \begin{scope}[shift={(3.6,0)}]
+  \node[lv, fill=white] (h') at (0,0) {$h$};
+  \node[lv, fill=pc7!55] (y1) at (-0.75,0.75) {}; \node[lv, fill=pc6!55] (y2) at (0.75,0.75) {};
+  \node[lv, fill=seed4!55] (u') at (-0.95,-0.9) {$u$};
+  \node[lv, fill=seed2!55] (v') at (0,-1.1) {$v$};
+  \node[lv, fill=seed1!55] (w') at (0.95,-0.9) {$w$};
+  \draw[eB] (h')--(y1) (h')--(y2) (y1)--(y2) (h')--(u');
+  \draw[eB, line width=1.6pt] (h')--(w');
+  \node[text=cB, font=\small] at (1.55,0.1) {$B$};
+  \end{scope}
+  \node[font=\scriptsize, align=center, anchor=north] at (1.8,-1.6)
+    {noise deleted $hv$ and added $hw$\\[0.4mm] \good{truth}: $4$ common edges\\[0.2mm] \bad{swap $v\leftrightarrow w$}: $5$ common edges};
+\end{tikzpicture}
+
+\vspace{1mm}
+{\scriptsize With weak correlation, wrong relabelings can fit better than the truth, so $\pi$ cannot be recovered.\par}}
+\end{column}
+\end{columns}
+
+\vfill
+\uncover<4->{{\tiny\color{kgray}Correlated \ER: Cullina Kiyavash 16, 17; Barak Chou Lei Schramm Sheng 19; Ganassali Massoulié 20; Mossel Xu 20; Ding Ma Wu Xu 21; Ganassali Massoulié Lelarge 21; Wu Xu Yu 22, 23; Fan Mao Wu Xu 23; Hall Massoulié 23; Mao Rudelson Tikhomirov 23; Mao Wu Xu Yu 23, 24; Ding Du 23; Ganassali Lelarge Massoulié 24; Ganassali Massoulié Semerjian 24; Ding Li 25; Ding Du Li 25; Huang Song Yang 25; Huang Yang 25, 26; \dots\par}}
+\end{frame}
+
+
+\begin{frame}{The correlated \ER model}
+\vspace{-1mm}
+\begin{center}
+\begin{tikzpicture}[scale=0.67]
+  \def\pos{1/0/0,2/1.3/0.4,3/2.5/0,4/0.3/1.4,5/1.5/1.6,6/2.7/1.3,7/0.8/2.6,8/2.2/2.7}
+  % parent
+  \begin{scope}[shift={(0,0)}]
+    \foreach \i/\x/\y in \pos \coordinate (g\i) at (\x,\y);
+    \foreach \i/\j in {1/2,2/3,1/4,2/5,3/6,4/5,5/6,4/7,5/8,7/8,6/8,2/4,1/5,3/5,7/5}
+      \draw[ink!70, line width=0.8pt] (g\i)--(g\j);
+    \foreach \i in {1,...,8} \node[vtx, minimum size=4.8mm] at (g\i) {\i};
+    \node[font=\small, align=center] at (1.35,-0.85) {parent graph};
+  \end{scope}
+  % A
+  \begin{scope}[shift={(5.4,1.75)}, scale=0.8, every node/.append style={transform shape}]
+    \foreach \i/\x/\y in \pos \coordinate (x\i) at (\x,\y);
+    \foreach \i/\j in {1/2,2/3,1/4,2/5,4/5,5/6,4/7,7/8,6/8,1/5,3/5,7/5}
+      \draw[eA] (x\i)--(x\j);
+    \foreach \i in {1,...,8} \node[vA, minimum size=4.8mm] at (x\i) {\i};
+    \node[text=cA, font=\large] at (3.5,2.4) {$A$};
+  \end{scope}
+  % B
+  \begin{scope}[shift={(5.4,-1.85)}, scale=0.8, every node/.append style={transform shape}]
+    \foreach \i/\x/\y in \pos \coordinate (y\i) at (\x,\y);
+    \foreach \i/\j in {1/2,2/3,1/4,3/6,4/5,5/6,5/8,7/8,6/8,2/4,3/5,7/5}
+      \draw[eB] (y\i)--(y\j);
+    \foreach \i/\l in {1/6,2/3,3/8,4/1,5/4,6/7,7/2,8/5}
+      \node[vB, minimum size=4.8mm] at (y\i) {\only<1>{\i}\only<2->{\l}};
+    \node[text=cB, font=\large] at (3.5,2.4) {$B$};
+  \end{scope}
+  \draw[flow] (3.0,1.9) -- node[above, sloped, font=\scriptsize]{subsample} (5.15,2.7);
+  \draw[flow] (3.0,0.7) -- node[below, sloped, font=\scriptsize]{subsample} (5.15,-0.3);
+  \node[visible on=<2->, font=\small, text=cB, anchor=west] at (8.0,-0.9) {relabel by $\pi$};
+\end{tikzpicture}
+\end{center}
+\vspace{-1mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.63\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item $(A_{ij},B_{\pi(i)\pi(j)})$ are \kw{i.i.d.\ pairs} of Bern$(q)$ with correlation $r$ \ct{Pedarsani Grossglauser 11}
+\item<3-> Subsampling: keep each edge of $\mathcal G(n,p)$ with probability $s$, \ so $q=ps$ and $r=\frac{s-q}{1-q}$.
+\item<4-> \lab{Goal}: observe $A$ and $B$; recover $\pi$ as $n\to\infty$.
+\end{itemize}
+\end{column}
+\begin{column}{0.35\textwidth}
+\begin{softbox}[paleO]
+\small \lab{In words:}\\[0.6mm]
+$r$ \ = how similar the two graphs are \ ($r=1$: identical)\\[0.6mm]
+$nq$ = average degree \ (sparse or dense)
+\end{softbox}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Computational phenomena}
+\centering
+\begin{tikzpicture}[x=1cm,y=0.9cm]
+  \def\cA{3.6}\def\cB{8.3}\def\cC{13.0}
+  \colorlet{polyc}{kgreen!16}\colorlet{hardc}{kred!14}
+  % legend
+  \fill[polyc, draw=ink!40, line width=0.4pt] (7.05,0.38) rectangle +(0.32,0.24);
+  \node[font=\scriptsize, anchor=west] at (7.4,0.5) {polynomial time};
+  \fill[visible on=<6->, hardc, draw=ink!40, line width=0.4pt] (9.75,0.38) rectangle +(0.32,0.24);
+  \node[visible on=<6->, font=\scriptsize, anchor=west] at (10.1,0.5) {conjectured hard};
+  % fills
+  \fill[visible on=<2->, polyc] (\cA,-1.75) rectangle (\cC,-0.9);
+  \fill[visible on=<3->, polyc] (\cA,-2.6) rectangle (\cB,-1.75);
+  \fill[visible on=<4->, polyc] (\cA,-3.45) rectangle (\cC,-2.6);
+  \fill[visible on=<4->, polyc] (\cB,-2.6) rectangle (\cC,-1.75);
+  \fill[visible on=<5->, polyc] (\cB,-4.3) rectangle (\cC,-3.45);
+  \fill[visible on=<6->, hardc] (\cA,-4.3) rectangle (\cB,-3.45);
+  % grid
+  \draw[ink!70, line width=0.55pt] (0,0) rectangle (\cC,-4.3);
+  \foreach \y in {-0.9,-1.75} \draw[ink!70, line width=0.55pt] (0,\y) -- (\cC,\y);
+  \foreach \y in {-2.6,-3.45} \draw[ink!70, line width=0.55pt] (0,\y) -- (\cB,\y);
+  \draw[ink!70, line width=0.55pt] (\cA,0) -- (\cA,-4.3);
+  \draw[ink!70, line width=0.55pt] (\cB,0) -- (\cB,-0.9);
+  \draw[ink!70, line width=0.55pt] (\cB,-1.75) -- (\cB,-4.3);
+  \draw[ink!50, line width=0.45pt] (0,0) -- (\cA,-0.9);
+  \node[font=\footnotesize] at (2.85,-0.22) {$nq$};
+  \node[font=\footnotesize] at (0.5,-0.68) {$r$};
+  \node[font=\footnotesize] at (5.95,-0.45) {\textbf{sparse} \ $nq=n^{o(1)}$};
+  \node[font=\footnotesize] at (10.65,-0.45) {\textbf{dense} \ $nq=n^{\Theta(1)}$};
+  \node[font=\footnotesize] at (1.8,-1.33) {$r\to1$};
+  \node[font=\footnotesize] at (1.8,-2.18) {constant $r$ close to $1$};
+  \node[font=\footnotesize] at (1.8,-3.03) {constant $r>\sqrt\alpha$};
+  \node[font=\footnotesize] at (1.8,-3.88) {constant $r<\sqrt\alpha$};
+  % entries
+  \node[visible on=<2->, font=\scriptsize, text=kgray] at (8.3,-1.33) {Ding Ma Wu Xu 21; Fan Mao Wu Xu 23; Mao Rudelson Tikhomirov 21; \dots};
+  \node[visible on=<3->, font=\scriptsize, text=kgray, align=center] at (5.95,-2.18) {Ganassali Massoulié 20;\\ Mao Rudelson Tikhomirov 23};
+  \node[visible on=<4->, font=\scriptsize, align=center] at (5.95,-3.03) {counting chandeliers: $r^2>\alpha\approx0.338$\\ \textcolor{kgray}{Mao Wu Xu Yu 23}};
+  \node[visible on=<4->, font=\scriptsize, text=kgray, align=center] at (10.65,-2.35) {Mao Wu Xu Yu 23};
+  \node[visible on=<5->, font=\scriptsize, align=center] at (10.65,-3.45) {\textbf{any constant} $r>0$ \ \textcolor{kgray}{Ding Li 25}};
+  \node[visible on=<6->, font=\scriptsize, align=center] at (5.95,-3.88) {low-degree hard \ \textcolor{kgray}{Ding Du Li 25}};
+\end{tikzpicture}
+
+\vspace{2.5mm}
+\raggedright
+\begin{itemize}\small\setlength{\itemsep}{0.2em}
+\item<4-> \kw{Otter's constant} appears: $\alpha\approx0.338$, \ \#\,unlabeled trees with $N$ edges $=(\alpha+o(1))^{-N}$ \ct{Otter 48}
+\item<6-> Sparse, $r<\sqrt\alpha$: low-degree hardness \ct{Ding Du Li 25}; local algorithms fail \ct{Ganassali Massoulié Semerjian 24}
+\item<7-> Dense: degree-$O(1/r)$ polynomials fail \ct{Ding Du Li 25}: a \kw{smooth tradeoff} between correlation and running time
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Beyond \ER}
+\begin{itemize}\setlength{\itemsep}{0.5em}
+\item These results use that the edge pairs are \kw{independent} across vertex pairs.
+\item<2-> We are interested in what happens \kw{beyond \ER}: other random graph models, and graphs whose edges are \bad{dependent}. \ We focus on the \kw{geometric} case.
+\end{itemize}
+\vspace{3mm}
+\centering
+\uncover<2->{%
+\begin{tikzpicture}
+  \tikzset{ed/.style={ink!38, line width=0.6pt},
+           capt/.style={font=\small, align=center, anchor=north},
+           cit/.style={font=\tiny, text=kgray, align=center, anchor=north, text width=3.1cm}}
+  \def\gap{3.55}
+  % (1) inhomogeneous
+  \begin{scope}[shift={(0,0)}]
+    \foreach \i/\x/\y in {1/0.05/1.25,2/0.0/0.25,3/0.75/0.0,4/1.05/1.4,5/1.85/1.05,6/1.9/0.05}
+      \coordinate (p\i) at (\x,\y);
+    \coordinate (h1) at (0.55,0.75); \coordinate (h2) at (1.4,0.55);
+    \foreach \i in {1,2,3,4} \draw[ed] (h1)--(p\i);
+    \foreach \i in {3,4,5,6} \draw[ed] (h2)--(p\i);
+    \draw[ed] (h1)--(h2);
+    \foreach \i in {1,...,6} \fill[ink!75] (p\i) circle (0.75mm);
+    \fill[ink!75] (h1) circle (1.9mm); \fill[ink!75] (h2) circle (1.5mm);
+    \node[capt] at (0.95,-0.3) {inhomogeneous};
+    \node[cit] at (0.95,-0.72) {Ding Fei Wang 25; Vassaux 26};
+  \end{scope}
+  % (2) growing graphs
+  \begin{scope}[shift={(\gap,0)}]
+    \foreach \i/\x/\y in {1/0.95/1.35,2/0.45/0.8,3/1.45/0.8,4/0.1/0.15,5/0.75/0.15,6/1.25/0.15,7/1.85/0.15}
+      \coordinate (u\i) at (\x,\y);
+    \foreach \i/\j in {1/2,1/3,2/4,2/5,3/6,3/7} \draw[ed] (u\i)--(u\j);
+    \foreach \i in {1,...,7} \node[circle, fill=ink!75, text=white, inner sep=0pt, minimum size=3.3mm, font=\tiny] at (u\i) {\i};
+    \node[capt] at (0.95,-0.3) {growing graphs};
+    \node[cit] at (0.95,-0.72) {Rácz Sridhar 22; Bäumler Rácz Ross Sridhar 26};
+  \end{scope}
+  % (3) block models
+  \begin{scope}[shift={(2*\gap,0)}]
+    \foreach \i/\x/\y in {1/0.05/0.3,2/0.4/1.2,3/0.6/0.55,4/0.0/0.95}
+      \coordinate (c\i) at (\x,\y);
+    \foreach \i/\x/\y in {1/1.3/0.3,2/1.85/1.2,3/1.9/0.45,4/1.35/1.0}
+      \coordinate (d\i) at (\x,\y);
+    \foreach \i/\j in {1/3,2/4,3/4,1/4,2/3} {\draw[ed] (c\i)--(c\j); \draw[ed] (d\i)--(d\j);}
+    \draw[ed] (c3)--(d1);
+    \foreach \i in {1,...,4} {\fill[cA] (c\i) circle (1.15mm); \fill[seed1] (d\i) circle (1.15mm);}
+    \node[capt] at (0.95,-0.3) {block models};
+    \node[cit] at (0.95,-0.72) {Rácz Sridhar 21; Gaudio Rácz Sridhar 22; Chen Ding Gong Li 25, 26};
+  \end{scope}
+  % (4) geometric
+  \begin{scope}[shift={(3*\gap,0)}]
+    \fill[kgreen!9] (0.95,0.7) circle (0.55);
+    \draw[kgreen!70, densely dashed, line width=0.5pt] (0.95,0.7) circle (0.55);
+    \foreach \i/\x/\y in {1/0.95/0.7,2/1.3/0.95,3/0.6/0.45,4/1.15/0.3,5/1.85/1.3,6/0.05/1.2,7/1.9/0.2,8/0.3/1.35}
+      \coordinate (g\i) at (\x,\y);
+    \foreach \i/\j in {1/2,1/3,1/4,2/5,3/6,4/7,6/8,2/4,3/4}
+      \draw[ed] (g\i)--(g\j);
+    \foreach \i in {1,...,8} \fill[kgreen] (g\i) circle (1.05mm);
+    \node[capt, text=kgreen] at (0.95,-0.3) {\textbf{geometric graphs}};
+    \node[cit] at (0.95,-0.72) {dependent edges: this talk};
+  \end{scope}
+\end{tikzpicture}}
+
+\vspace{3mm}
+\uncover<3->{%
+\begin{kboxplain}[width=0.94\textwidth]
+\centering Which phenomena of correlated \ER \kw{persist} in geometric graphs?\\[0.5mm]
+The dependence between edges makes the analysis \bad{much harder}.
+\end{kboxplain}}
+\end{frame}
+
+
+% ===================================================================
+% PART 2: CORRELATED RANDOM GEOMETRIC GRAPHS AND OUR RESULT
+% ===================================================================
+
+\outlineslide{2}
+
+\begin{frame}{Random geometric graphs}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.40\textwidth}
+\centering
+\only<1| handout:0>{\includegraphics[width=0.95\linewidth]{rgg_sphere.pdf}\\[1mm]
+ {\small on the sphere $\mathbb S^{d-1}$}}%
+\only<2-| handout:1>{\includegraphics[width=0.92\linewidth]{rgg_plane.pdf}\\[1mm]
+ {\small in pictures: points in the plane}}
+\end{column}
+\begin{column}{0.57\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.45em}
+\item Latent vectors $u_1,\dots,u_n$ i.i.d.\ uniform on $\mathbb S^{d-1}$; \ $i\sim j$ \ iff \ $\ip{u_i}{u_j}\ge\tau_{p,d}$\\[0.3mm]
+ {\small ($u_j$ lies in a \kw{cap} of measure $p$ around $u_i$)}
+\item<2-> One of the most canonical models with \kw{latent structure}: vertices carry latent features, edges encode proximity \ct{Penrose 03}
+\item<3-> Edges are \bad{dependent}: two vertices with a common neighbor are more likely to be adjacent, so there are many more \kw{triangles} than in an \ER graph.
+\item<4-> Well studied: testing for geometry \cts{Bubeck Ding Eldan Rácz 16; Liu Mohanty Schramm Yang 24; Du Mao Sun Wu Xu 26}, expansion \cts{Liu Mohanty Schramm Yang 23}, recovering the geometry \cts{\me\ Schramm 23; Fernandez Zhu 26}. \ Matching: \bad{much less understood}.
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Correlated random geometric graphs}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.53\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[inner sep=0pt] (a) at (0,0) {\includegraphics[width=3.15cm]{crgg_plane_A.pdf}};
+  \node[inner sep=0pt] (b) at (3.85,0) {\alt<2->{\includegraphics[width=3.15cm]{crgg_plane_B.pdf}}{\phantom{\includegraphics[width=3.15cm]{crgg_plane_B.pdf}}}};
+  \node[text=cA, above=0.6mm of a] {graph $A$};
+  \node[visible on=<2->, text=cB, above=0.6mm of b] {graph $B$};
+  \draw[visible on=<2->, flow] (1.68,0) -- (2.18,0);
+  \node[visible on=<2->, font=\scriptsize, text=ink, align=center, below=0.8mm of b] {perturb every latent point,\\ then connect nearby points};
+  \node[font=\scriptsize, text=seed1!80!black, align=center, below=0.8mm of a] {a vertex $i$ \\ (and its partner in $B$)};
+\end{tikzpicture}
+\end{column}
+\begin{column}{0.45\textwidth}
+\uncover<3->{%
+\begin{kbox}[korange]{Model}
+For each vertex $i\in[n]$, independently:
+\begin{itemize}\setlength{\itemsep}{0.15em}
+\item $u_i^A$ uniform on $\mathbb S^{d-1}$;
+\item $u_i^B$ uniform on $\{v:\ip{u_i^A}{v}=\rho\}$.
+\end{itemize}
+For a hidden permutation $\pi$, observe
+\[ \begin{aligned}
+ A_{ij}&=\mathbf 1\{\ip{u_i^A}{u_j^A}\ge\tau_{p,d}\},\\
+ B_{\pi(i)\pi(j)}&=\mathbf 1\{\ip{u_i^B}{u_j^B}\ge\tau_{p,d}\}.
+\end{aligned} \]
+\vspace{-4mm}
+\end{kbox}}
+\end{column}
+\end{columns}
+\vspace{2mm}
+\begin{itemize}
+\item<4-> \lab{Known}: $n,d,p,\rho$. \ \lab{Goal}: \kw{exact recovery}, $\P[\hat\pi=\pi]\to1$. \ Dense: $p\in[p_0,1-p_0]$; \ $\rho\in(0,1]$ fixed.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{If we could see the latent vectors}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.60\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.45em}
+\item We would see two point clouds, but only \bad{up to a rotation} (the inner products do not fix the coordinates). \ Find a rotation \emph{and} a matching: \kw{Procrustes matching} \cts{Wang Wu Xu Yolou 22; Gong Li 24; Even Ganassali Maier Massoulié 24; Niu Schramm Xu 26}
+\item<2-> \textbf{Low dimension} $d=o(\log n)$: sharp thresholds \ct{Wang Wu Xu Yolou 22}, attained by the Umeyama algorithm \cts{Umeyama 88} up to $\mathrm{poly}(d)$ \ct{Gong Li 24}
+\item<3-> \textbf{High dimension} $d\gg\log n$: much less understood.
+\end{itemize}
+\vspace{2mm}
+\begin{minipage}[c]{0.3\linewidth}
+\includegraphics[width=\linewidth]{external/prokrustes_berliner_wespen_1878.jpg}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.66\linewidth}
+\footnotesize\raggedright \textbf{Procrustes} (Greek myth) made every guest fit his one bed, by stretching or cutting. \ \emph{Orthogonal Procrustes problem}: the rotation that best fits one point cloud to another \ct{Schönemann 66}\\[0.6mm]
+{\tiny\color{kgray}Cartoon: Berliner Wespen, 1878 (public domain)}
+\end{minipage}
+\end{column}
+\begin{column}{0.38\textwidth}
+\centering
+\vspace{2mm}
+\begin{tikzpicture}
+  \node[inner sep=0pt] (g) at (0,0) {\includegraphics[width=2.1cm]{gram_matrix.pdf}};
+  \node[above=0.6mm of g, font=\small] {inner products};
+  \node[inner sep=0pt] (t) at (3.25,0) {\alt<4->{\includegraphics[width=2.1cm]{gram_thresholded.pdf}}{\phantom{\includegraphics[width=2.1cm]{gram_thresholded.pdf}}}};
+  \node[visible on=<4->, above=0.6mm of t, font=\small] {graph};
+  \draw[visible on=<4->, flow] (g.east) -- node[above, font=\scriptsize]{$\mathbf 1\{\cdot\ge\tau\}$} (t.west);
+\end{tikzpicture}
+
+\vspace{5mm}
+\uncover<4->{\begin{kboxplain}\centering In our model, we \bad{only} observe whether each inner product exceeds a threshold.\end{kboxplain}}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{High-dimensional Procrustes matching \ \ct{Niu Schramm Xu 26}}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.54\textwidth}
+Observe $X_1,\dots,X_n\sim N(0,I_d)$ and
+\[ Y_i=\rho\,Q\,X_{\pi(i)}+\sqrt{1-\rho^2}\,Z_i,\quad Q\sim\mathrm{Haar}(O(d)): \]
+a rotated, noisy copy of the cloud, relabeled by $\pi$.
+\end{column}
+\begin{column}{0.44\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.9]
+  \foreach \i/\x/\y/\c in {1/0.1/1.0/pc1,2/0.8/1.45/pc2,3/1.3/0.75/pc3,4/0.55/0.3/pc4,5/-0.15/0.35/pc5,6/1.05/1.75/pc6,7/0.45/1.05/pc7}
+    \fill[\c] (\x,\y) circle (1.15mm);
+  \node[font=\small, text=cA] at (0.55,-0.2) {$X$};
+  \begin{scope}[shift={(3.45,0)}, rotate around={115:(0.55,0.95)}]
+    \foreach \i/\x/\y/\c in {1/0.15/0.95/pc1,2/0.85/1.35/pc2,3/1.2/0.8/pc3,4/0.6/0.25/pc4,5/-0.1/0.45/pc5,6/1.0/1.85/pc6,7/0.5/1.1/pc7}
+      \fill[\c] (\x,\y) circle (1.15mm);
+  \end{scope}
+  \node[font=\small, text=cB] at (4.0,-0.2) {$Y$};
+  \draw[flow] (1.6,1.05) -- node[above, font=\scriptsize]{rotate} node[below, font=\scriptsize]{$+$ noise} (2.55,1.05);
+\end{tikzpicture}
+
+{\tiny\color{kgray}(same color $=$ corresponding points; unknown in the data)}
+\end{column}
+\end{columns}
+\vspace{3mm}
+\uncover<2->{%
+\begin{kbox}{Theorem \ \cts{Niu Schramm Xu 26}}
+\begin{itemize}\setlength{\itemsep}{0.25em}
+\item \textbf{Algorithm}: if $d\ge\mathrm{polylog}(n)$ and $\rho^2>\sqrt\alpha$, counting \gr{wide trees} gives exact recovery in polynomial time. \ \good{The first efficient algorithm at constant correlation} for $d\gg\log n$.
+\item<3-> \textbf{Information-theoretic}: exact recovery is possible if $d\ge C\log n$ and $\rho^2\ge C\max\big\{\frac{\log n}{d},\sqrt{\frac{\log n}{n}}\big\}$.
+\end{itemize}
+\end{kbox}}
+\end{frame}
+
+
+\begin{frame}{Tree counting and Otter's constant}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.56\textwidth}
+\setlength{\abovedisplayskip}{3pt}\setlength{\belowdisplayskip}{3pt}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item \kw{Tree counting} (chandeliers \cts{Mao Wu Xu Yu 23}, wide trees \cts{Niu Schramm Xu 26}): one coordinate per rooted \kw{tree shape}.
+\item<2-> A shape with $m$ edges is correlated across $A$ and $B$ through each of its edges: it contributes $\approx r^{2m}$ to $\mathrm{SNR}^2$.
+\item<3-> There are $(\alpha+o(1))^{-m}$ shapes with $m$ edges, \ $\alpha\approx0.338$ \ct{Pólya 37; Otter 48}. \ Hence
+\[ \mathrm{SNR}^2\approx\sum_m\alpha^{-m}r^{2m}=\sum_m\Big(\frac{r^2}{\alpha}\Big)^{m}, \]
+ which grows only if \bad{$r>\sqrt\alpha$}.
+\item<4-> Correlated \ER: $r$ is the edge correlation. \ Procrustes: effective $r=\rho^2$, \ so $\rho^2>\sqrt\alpha$.
+\end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.85]
+  \minitree{0}{0}{0/0/0/-0.3, 0/-0.3/0/-0.6, 0/-0.6/0/-0.9, 0/-0.9/0/-1.2}
+  \minitree{0.75}{0}{0/0/0/-0.3, 0/-0.3/0/-0.6, 0/-0.6/-0.16/-0.9, 0/-0.6/0.16/-0.9}
+  \minitree{1.5}{0}{0/0/0/-0.3, 0/-0.3/-0.16/-0.6, 0/-0.3/0.16/-0.6, -0.16/-0.6/-0.16/-0.9}
+  \minitree{2.3}{0}{0/0/0/-0.3, 0/-0.3/-0.24/-0.6, 0/-0.3/0/-0.6, 0/-0.3/0.24/-0.6}
+  \minitree{3.15}{0}{0/0/-0.16/-0.3, 0/0/0.16/-0.3, -0.16/-0.3/-0.16/-0.6, -0.16/-0.6/-0.16/-0.9}
+  \minitree{0.1}{-1.65}{0/0/-0.16/-0.3, 0/0/0.16/-0.3, -0.16/-0.3/-0.3/-0.6, -0.16/-0.3/-0.02/-0.6}
+  \minitree{0.95}{-1.65}{0/0/-0.16/-0.3, 0/0/0.16/-0.3, -0.16/-0.3/-0.16/-0.6, 0.16/-0.3/0.16/-0.6}
+  \minitree{1.85}{-1.65}{0/0/-0.26/-0.3, 0/0/0/-0.3, 0/0/0.26/-0.3, -0.26/-0.3/-0.26/-0.6}
+  \minitree{2.85}{-1.65}{0/0/-0.36/-0.3, 0/0/-0.12/-0.3, 0/0/0.12/-0.3, 0/0/0.36/-0.3}
+  \node[font=\scriptsize, text=ink] at (1.6,-2.65) {all $9$ rooted trees with $4$ edges};
+\end{tikzpicture}
+
+\vspace{1mm}
+\includegraphics[width=0.74\linewidth]{otter_counts.pdf}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Main result: efficient exact recovery}
+\begin{kbox}{Theorem 1 \ \cts{Huang, Jiao, \me, Li 26}}
+Fix $p_0\in(0,\tfrac12]$ and $\rho\in(0,1]$. There are constants $L,C$ and a randomized algorithm such that, for all $p\in[p_0,1-p_0]$ and $d\ge(\log n)^L$, it runs in time $O(n^{C})$ and outputs $\hat\pi$ with \ $\P[\hat\pi=\pi]\to1$.
+\end{kbox}
+\vspace{1mm}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item<2-> \good{Every fixed positive correlation}, from the binary graphs only: no $\sqrt\alpha$ barrier.
+\item<3-> Despite the \bad{geometric dependence}: previously known only for models with independent edges \ct{Ding Li 25ab}
+\item<4-> A robust framework, \kw{seeded path counts}: the geometry enters only through spectral estimates and local comparisons with correlated \ER. We expect it to apply to other dense models.
+\end{itemize}
+\vspace{1mm}
+\centering
+\begin{tikzpicture}[visible on=<2->, x=9.2cm, y=1cm]
+  \fill[kgreen!25] (0.5816,0.62) rectangle (1,0.9);
+  \node[font=\scriptsize, anchor=east, text=kgreen!75!black] at (0.57,0.76) {wide trees, with the latent vectors observed \cts{Niu Schramm Xu 26}: \ $\rho^2>\sqrt\alpha$};
+  \fill[kblue!22] (0.004,0.16) rectangle (1,0.44);
+  \node[font=\scriptsize, text=kblue] at (0.5,0.3) {this work: every $\rho>0$, observing only the two graphs};
+  \draw[ink, line width=0.6pt] (0,0) -- (1,0);
+  \foreach \x/\l in {0/0,0.5816/\sqrt\alpha,1/1} \draw[ink] (\x,0.06)--(\x,-0.06) node[below, font=\scriptsize]{$\l$};
+  \node[font=\small, anchor=west] at (1.02,0) {$\rho^2$};
+\end{tikzpicture}
+\end{frame}
+
+
+% ===================================================================
+% PART 3: THE ALGORITHM
+% ===================================================================
+
+\outlineslide{3}
+
+\begin{frame}{Signatures and similarity scores}
+\centering
+\vspace{1mm}
+\begin{tikzpicture}
+  \tikzset{bx/.style={draw=soft, line width=0.6pt, rounded corners=2pt, minimum width=4.15cm, minimum height=3.55cm, anchor=north west},
+           hd/.style={font=\small\bfseries, anchor=north}}
+  % ---------- box 1
+  \node[bx] (b1) at (0,0) {};
+  \node[hd] at ($(b1.north)+(0,-0.1)$) {1. Signatures};
+  \begin{scope}[shift={(0.35,-1.35)}]
+    \foreach \i/\x/\y in {1/0/0,2/0.45/0.35,3/0.2/-0.4,4/0.75/-0.2,5/0.9/0.4}
+      \coordinate (m\i) at (\x,\y);
+    \foreach \i/\j in {1/2,1/3,2/5,3/4,4/5,2/4} \draw[cA, line width=0.6pt] (m\i)--(m\j);
+    \foreach \i in {2,3,4,5} \fill[cA] (m\i) circle (0.7mm);
+    \node[rootstar, minimum size=2.6mm, fill=cA, draw=cA] at (m1) {};
+    \node[font=\scriptsize, text=cA] at (-0.18,0.2) {$i$};
+    \draw[flow, cA] (1.15,0.05) -- (1.65,0.05);
+    \foreach \h [count=\k] in {0.55,0.25,0.75,0.4,0.15,0.6,0.35}
+      \fill[cA!80] (1.8+0.2*\k,-0.35) rectangle +(0.14,\h);
+    \node[font=\scriptsize, text=cA] at (2.6,-0.6) {$\Phi^A(i)\in\R^J$};
+  \end{scope}
+  \begin{scope}[shift={(0.35,-2.75)}]
+    \foreach \i/\x/\y in {1/0/0,2/0.45/0.3,3/0.25/-0.35,4/0.8/-0.15,5/0.85/0.4}
+      \coordinate (m\i) at (\x,\y);
+    \foreach \i/\j in {1/2,1/3,2/5,3/4,4/5,1/4} \draw[cB, line width=0.6pt] (m\i)--(m\j);
+    \foreach \i in {2,3,4,5} \fill[cB] (m\i) circle (0.7mm);
+    \node[rootstar, minimum size=2.6mm, fill=cB, draw=cB] at (m1) {};
+    \node[font=\scriptsize, text=cB] at (-0.18,0.2) {$j$};
+    \draw[flow, cB] (1.15,0.05) -- (1.65,0.05);
+    \foreach \h [count=\k] in {0.5,0.3,0.65,0.45,0.1,0.55,0.3}
+      \fill[cB!80] (1.8+0.2*\k,-0.3) rectangle +(0.14,\h);
+    \node[font=\scriptsize, text=cB] at (2.6,-0.55) {$\Phi^B(j)\in\R^J$};
+  \end{scope}
+  % ---------- box 2
+  \node[bx] (b2) at (4.55,0) {};
+  \node[hd] at ($(b2.north)+(0,-0.1)$) {2. Scores};
+  \node[font=\small] at ($(b2.north)+(0,-0.75)$) {$S(i,j)=\ip{\Phi^A(i)}{\Phi^B(j)}$};
+  \begin{scope}[shift={(5.65,-3.2)}]
+    \foreach \i in {0,...,5} \foreach \j in {0,...,5} {
+      \pgfmathsetmacro{\v}{ifthenelse(\i==\j,85,mod(37*\i+11*\j+5,23)+4)}
+      \fill[kgreen!\v] (0.34*\j,1.7-0.34*\i) rectangle +(0.32,0.32);
+    }
+    \node[font=\tiny, text=kgray, anchor=north] at (1.02,-0.02) {rows $i$, columns $j$ (ordered by $\pi$)};
+  \end{scope}
+  % ---------- box 3
+  \node[bx] (b3) at (9.1,0) {};
+  \node[hd] at ($(b3.north)+(0,-0.1)$) {3. Assignment};
+  \begin{scope}[shift={(9.55,-1.25)}]
+    \foreach \k in {1,...,5} {
+      \node[circle, draw=cA, fill=paleA, minimum size=3.4mm, inner sep=0pt] (t\k) at (0.62*\k-0.2,0) {};
+      \node[circle, draw=cB, fill=paleB, minimum size=3.4mm, inner sep=0pt] (u\k) at (0.62*\k-0.2,-1.4) {};
+    }
+    \foreach \k in {1,2,4,5} \draw[kgreen!80!black, line width=0.9pt] (t\k)--(u\k);
+    \draw[kred, line width=0.9pt, densely dashed] (t3)--(u4);
+    \node[font=\scriptsize, align=center] at (1.65,-2.05) {keep large scores, match greedily,\\ then \kw{refine} to fix all errors};
+  \end{scope}
+  \draw[flow, line width=0.8pt] (4.2,-1.75)--(4.5,-1.75);
+  \draw[flow, line width=0.8pt] (8.75,-1.75)--(9.05,-1.75);
+\end{tikzpicture}
+
+\vspace{1.8mm}
+\raggedright
+\begin{itemize}\setlength{\itemsep}{0.3em}
+\item<2-> We want \ $S(i,j)$ \good{large} for the true pair $j=\pi(i)$, \ and \bad{small} for all $\approx n^2$ fake pairs $j\ne\pi(i)$.
+\item<3-> Signatures: degrees \cts{Ding Ma Wu Xu 21}, spectral \cts{Fan Mao Wu Xu 23}, local trees \cts{Ganassali Massoulié 20; Mao Rudelson Tikhomirov 23}, \dots\ either sensitive to noise, or limited to sparse graphs.
+\end{itemize}
+\vspace{1mm}
+\centering
+\uncover<4->{\begin{kboxplain}[width=0.6\textwidth]\centering How to construct the vertex signature?\end{kboxplain}}
+\end{frame}
+
+\begin{frame}{Rooted subgraph counts}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.46\textwidth}
+\centering
+\begin{tikzpicture}[scale=1.1]
+  \tikzset{rv/.style={circle, fill=ink, text=white, inner sep=0pt, minimum size=5.2mm, font=\scriptsize},
+           ov/.style={circle, fill=cA!75, inner sep=0pt, minimum size=3.6mm},
+           hl/.style={kmag, line width=2.4pt}}
+  \coordinate (i) at (0.9,1.6); \coordinate (a) at (0,0.75); \coordinate (b) at (0.8,0.45);
+  \coordinate (c) at (1.75,0.85); \coordinate (d) at (2.35,0.15); \coordinate (e) at (0.25,-0.25);
+  \draw[ink!70, line width=0.7pt] (i)--(a) (i)--(b) (i)--(c) (a)--(b) (c)--(d) (a)--(e) (b)--(e);
+  \draw<2>[hl] (a)--(i)--(b);
+  \draw<3>[hl] (a)--(i)--(c);
+  \draw<4>[hl] (b)--(i)--(c);
+  \foreach \p in {a,b,c,d,e} \node[ov] at (\p) {};
+  \node[rv] at (i) {$i$};
+  \node[font=\small] at (1.1,-0.85) {graph $A$};
+  % the template
+  \begin{scope}[shift={(3.35,1.0)}]
+  \node[rv, minimum size=4.4mm] (h0) at (0,0.5) {};
+  \node[ov] (h1) at (-0.38,-0.15) {}; \node[ov] (h2) at (0.38,-0.15) {};
+  \draw[ink!70, line width=0.7pt] (h0)--(h1) (h0)--(h2);
+  \node[font=\scriptsize, align=center] at (0,-0.75) {rooted\\ subgraph $H$};
+  \end{scope}
+\end{tikzpicture}
+
+\vspace{1mm}
+\uncover<5->{$W_{i,H}(A)=3$ \ \ {\small (copies of $H$ rooted at $i$)}}
+\end{column}
+\begin{column}{0.52\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.55em}
+\item $W_{i,H}(A)$: number of copies of $H$ \kw{rooted at} $i$ in $A$
+\item<6-> \kw{Signed} counts, with centered entries $\overline A=A-\E A$ \ct{Bubeck Ding Eldan Rácz 16}:
+\[ W_{i,H}(\overline A)=\sum_{\substack{S\cong H\\ \mathrm{root}(S)=i}}\ \prod_{e\in E(S)}\overline A_e \]
+\item<7-> For independent edges, $W_{i,H}(\overline A)$ and $W_{i,I}(\overline A)$ are \good{uncorrelated} for distinct $H\ne I$.
+\item<8-> A rich family $\mathcal H$ of rooted graphs $\Rightarrow$ signature $\big(W_{i,H}(\overline A)\big)_{H\in\mathcal H}$ \ct{Mao Wu Xu Yu 23}
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Similarity scores from signed subgraph counts}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.56\textwidth}
+For a family $\mathcal H$ of rooted graphs with $N$ edges \ct{Mao Wu Xu Yu 23}:
+\[
+ \Phi_{ij}=\sum_{H\in\mathcal H}\mathrm{aut}(H)\,W_{i,H}(\overline A)\,W_{j,H}(\overline B).
+\]
+\vspace{-2mm}
+\begin{itemize}\setlength{\itemsep}{0.4em}
+\item<2-> True pair: each edge of $H$ is correlated across the two graphs, so the mean is $\propto r^{N}$.
+\item<3-> Fake pair $j\ne\pi(i)$: mean zero \ (each $H$ is \kw{uniquely rooted}).
+\item<4-> Different shapes are orthogonal under independence.
+\end{itemize}
+\vspace{1mm}
+\uncover<4->{%
+\begin{kboxplain}
+\centering
+Heuristic: \ $\displaystyle \mathrm{SNR}^2\ \approx\ \sum_{H\in\mathcal H} r^{2|E(H)|}=|\mathcal H|\,r^{2N}$
+\end{kboxplain}}
+\end{column}
+\begin{column}{0.42\textwidth}
+\centering
+\begin{tikzpicture}[scale=1.0]
+  \def\tr{0/0, 0.9/0.55, 0.9/-0.55, 1.8/0.85, 1.8/0.25}
+  \begin{scope}[shift={(0,0)}]
+    \coordinate (a0) at (0,0); \coordinate (a1) at (0.9,0.55); \coordinate (a2) at (0.9,-0.55);
+    \coordinate (a3) at (1.8,0.95); \coordinate (a4) at (1.8,0.2);
+    \draw[eA] (a0)--(a1)--(a3) (a1)--(a4) (a0)--(a2);
+    \foreach \k in {1,...,4} \node[circle, fill=cA, inner sep=0pt, minimum size=1.8mm] at (a\k) {};
+    \node[rootstar, fill=cA, draw=cA] at (a0) {};
+    \node[font=\small, text=cA, left=1mm] at (a0) {$i$};
+    \node[font=\small, text=cA] at (2.5,0) {in $A$};
+  \end{scope}
+  \begin{scope}[shift={(0,-2.3)}]
+    \coordinate (b0) at (0,0); \coordinate (b1) at (0.9,0.55); \coordinate (b2) at (0.9,-0.55);
+    \coordinate (b3) at (1.8,0.95); \coordinate (b4) at (1.8,0.2);
+    \draw[eB] (b0)--(b1)--(b3) (b1)--(b4) (b0)--(b2);
+    \foreach \k in {1,...,4} \node[circle, fill=cB, inner sep=0pt, minimum size=1.8mm] at (b\k) {};
+    \node[rootstar, fill=cB, draw=cB] at (b0) {};
+    \node[font=\small, text=cB, left=1mm] at (b0) {$\pi(i)$};
+    \node[font=\small, text=cB] at (2.5,0) {in $B$};
+  \end{scope}
+  \draw[visible on=<2->, kgreen, densely dotted, line width=0.8pt] ($(a0)!0.5!(a1)$) to[bend right=12] node[pos=0.5, left, font=\scriptsize]{$r$} ($(b0)!0.5!(b1)$);
+  \draw[visible on=<2->, kgreen, densely dotted, line width=0.8pt] ($(a1)!0.5!(a3)$) to[bend left=18] node[pos=0.45, right, font=\scriptsize]{$r$} ($(b1)!0.5!(b3)$);
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Desirable properties: mean and variance}
+For each vertex $i$ in $A$ and $j$ in $B$: \quad
+$\displaystyle \Phi_{ij}=\sum_{H\in\mathcal H}\mathrm{aut}(H)\,\underbrace{W_{i,H}(\overline A)\,W_{j,H}(\overline B)}_{\text{correlated iff } j=\pi(i)}$
+
+\vspace{0mm}
+\centering
+\begin{tikzpicture}[x=1.15cm, y=0.78cm]
+  \draw[-{Latex[length=2mm]}, ink, line width=0.7pt] (-1.5,0)--(8.6,0) node[right]{$\Phi_{ij}$};
+  \draw[ink!55, line width=0.9pt, domain=-1.2:1.2, samples=80] plot (\x,{1.9*exp(-(\x)^2/(2*0.09))});
+  \draw[visible on=<2->, kgreen, line width=1.2pt, domain=3.0:8.0, samples=100] plot (\x,{1.45*exp(-(\x-5.5)^2/(2*0.55))});
+  \node[font=\small, text=ink!70] at (0,2.2) {fake pair $j\ne\pi(i)$};
+  \node[visible on=<2->, font=\small, text=kgreen!80!black] at (5.5,1.9) {true pair $j=\pi(i)$};
+  \draw[ink] (0,0.08)--(0,-0.08) node[below, font=\small]{$0$};
+  \draw[visible on=<2->, ink] (5.5,0.08)--(5.5,-0.08) node[below, font=\small]{$\mu$};
+  \draw[visible on=<3->, kmag, line width=0.9pt] (2.75,0.08)--(2.75,-0.08) node[below, font=\small, text=kmag]{$\tau$};
+  \draw[visible on=<2->, decorate, decoration={brace, mirror, amplitude=5pt}, ink!70] (0,-0.62)--(5.5,-0.62) node[midway, below=5pt, font=\small]{mean separation $\mu$};
+\end{tikzpicture}
+
+\vspace{2mm}
+\raggedright
+\begin{itemize}
+\item<3-> Threshold at $\tau$: match $i$ to $j$ if $\Phi_{ij}\ge\tau$. \ We want the \bad{fluctuations} of $\Phi_{ij}$ to be small compared to $\mu$, for all $\approx n^2$ pairs.
+\end{itemize}
+\vspace{1mm}
+\centering
+\uncover<4->{\begin{kboxplain}[width=0.55\textwidth]\centering Which family $\mathcal H$ of rooted graphs to count?\end{kboxplain}}
+\end{frame}
+
+\begin{frame}{Counting trees}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.56\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.5em}
+\item \lab{Wishful thinking}: ignore the correlations between different shapes $H$. Then
+\[ \frac{\mathrm{Var}[\Phi_{ij}]}{\mu^2}\ \approx\ \frac{1}{|\mathcal H|\,r^{2N}}\ \longrightarrow\ 0 \]
+ requires a \good{rich} family ($|\mathcal H|$ exponential in $N$) of \good{large} graphs ($N\asymp\log n$, to beat $n^2$ pairs) that are \good{easy to count}.
+\item<2-> \lab{Trees}: $|\mathcal H|=(\alpha+o(1))^{-N}$ \ct{Otter 48}, counted by color coding \ct{Alon Yuster Zwick 95}. \ This needs \bad{$r>\sqrt\alpha$}.
+\item<3-> But copies of \bad{different} trees can share edges: the cross-correlations cannot be ignored.
+\end{itemize}
+\end{column}
+\begin{column}{0.42\textwidth}
+\centering
+\begin{tikzpicture}[visible on=<3->, scale=1.0]
+  \tikzset{tv/.style={circle, fill=ink!70, inner sep=0pt, minimum size=1.9mm},
+           tH/.style={draw=cA, line width=1.3pt},
+           tI/.style={draw=seed1, line width=1.3pt, densely dashed},
+           tB/.style={draw=kmag!35, line width=2.6pt}}
+  \coordinate (r) at (1.5,2.2);
+  \coordinate (a) at (0.8,1.4); \coordinate (b) at (2.2,1.4);
+  \coordinate (c) at (0.35,0.6); \coordinate (d) at (1.2,0.6);
+  \coordinate (e) at (2.2,0.6); \coordinate (f) at (2.9,0.6);
+  \coordinate (g) at (1.2,-0.2);
+  % shared edges highlighted
+  \draw[tB] (r)--(a)--(d);
+  \draw[tH] (r)--(a) (a)--(c) (a)--(d) (r)--(b)--(e);
+  \draw[tI] (r)--(a) (a)--(d) (d)--(g) (r)--(b) (b)--(f);
+  \foreach \p in {a,b,c,d,e,f,g} \node[tv] at (\p) {};
+  \node[rootstar] at (r) {};
+  \node[font=\scriptsize, left=1mm] at (r) {$i$};
+  \draw[cA, line width=1.3pt] (0,-0.75)--(0.45,-0.75) node[right, font=\scriptsize, text=ink]{copy of $H$};
+  \draw[seed1, line width=1.3pt, densely dashed] (1.9,-0.75)--(2.35,-0.75) node[right, font=\scriptsize, text=ink]{copy of $I$};
+  \draw[kmag!35, line width=2.6pt] (0,-1.15)--(0.45,-1.15) node[right, font=\scriptsize, text=ink]{shared edges};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Our idea: seeds as labels}
+\lab{Challenge 1}: only $\approx\alpha^{-m}$ tree shapes with $m$ edges, so trees amplify only $r>\sqrt\alpha$.\\[0.4mm]
+\lab{Idea}: suppose we know $K$ \kw{seed pairs} $(a,\pi(a))$, to be guessed later: \good{labels readable in both graphs}.
+
+\vspace{0.5mm}
+\centering
+\begin{tikzpicture}[scale=0.8]
+  \tikzset{pv/.style={circle, draw=ink, fill=white, line width=0.7pt, minimum size=5.4mm, inner sep=0pt, font=\scriptsize},
+           sq/.style={rectangle, line width=0.8pt, minimum size=5.0mm, inner sep=0pt, font=\scriptsize}}
+  \node[font=\small] at (-0.9,2.45) {$w=$};
+  \foreach \c [count=\k] in {1,2,1,3,2} {
+    \node[sq, draw=seed\c, fill=seed\c!15, text=seed\c!70!black] (wd\k) at (1.15*\k-0.55,2.45) {$\c$};
+    \node[font=\tiny, text=kgray, above=0mm of wd\k] {$w_{\k}$};
+  }
+  \node[font=\small, anchor=west] at (6.2,2.45) {$\in[K]^{V-1}=[3]^5$};
+  \draw[soft, line width=0.5pt] (-1.2,1.95)--(8.6,1.95);
+  \node[rootstar, minimum size=4mm] (p0) at (-0.7,0) {};
+  \node[font=\scriptsize, text=ink, below=1.5mm of p0] {query $i$};
+  \foreach \k in {1,...,6} \node[pv] (p\k) at (1.15*\k-0.55,0) {$r_{\k}$};
+  \draw[pe] (p0)--(p1)--(p2)--(p3)--(p4)--(p5)--(p6);
+  \node[sq, draw=seed1, fill=seed1!15, text=seed1!70!black] (s1) at (1.75,1.2) {$s_1$};
+  \node[sq, draw=seed3, fill=seed3!15, text=seed3!70!black] (s3) at (4.05,1.2) {$s_3$};
+  \node[sq, draw=seed2, fill=seed2!15, text=seed2!70!black] (s2) at (3.45,-1.25) {$s_2$};
+  \draw[se, seed1] (s1)--(p1); \draw[se, seed1] (s1)--(p3);
+  \draw[se, seed2] (s2)--(p2); \draw[se, seed2] (s2)--(p5);
+  \draw[se, seed3] (s3)--(p4);
+  \node[font=\scriptsize, text=ink, below=1.5mm of p6] {no seed};
+  \node[font=\scriptsize, text=kgray, align=left, anchor=west] at (7.4,0.0) {$r_t$ is attached\\ to seed $s_{w_t}$};
+\end{tikzpicture}
+
+\vspace{0mm}
+\raggedright
+\begin{itemize}\setlength{\itemsep}{0.25em}
+\item<2-> A \kw{word} $w\in[K]^{V-1}$ gives a template $H_w$: the path $i,r_1,\dots,r_V$ with $r_t$ attached to seed $s_{w_t}$ (repetitions allowed).
+\item<3-> Signature of $i$: one coordinate per word, the signed count of copies of $H_w$ rooted at $i$.
+\item<4-> $K^{V-1}$ words: \good{$K$ choices per step, for any $K$}, the same in $A$ and $B$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[t]{A toy example}
+\centering
+\begin{tikzpicture}[x=1cm,y=0.91cm]
+  \tikzset{bg/.style={circle, fill=black!22, inner sep=0pt, minimum size=1.5mm},
+           pv/.style={circle, draw=ink, fill=white, line width=0.7pt, inner sep=0pt, minimum size=3.6mm},
+           sq/.style={rectangle, line width=0.7pt, inner sep=0pt, minimum size=3.6mm},
+           tw/.style={line width=1.5pt}}
+  % ---------------- panels
+  \draw[soft, line width=0.6pt, rounded corners=6pt] (0,0) rectangle (5.1,3.3);
+  \draw[soft, line width=0.6pt, rounded corners=6pt] (8.1,0) rectangle (13.2,3.3);
+  \node[text=cA, font=\small] at (2.55,3.58) {graph $A$};
+  \node[text=cB, font=\small] at (10.65,3.58) {graph $B$};
+  % ---------------- background vertices (faint), mirrored
+  \foreach \x/\y in {0.45/0.45,1.15/2.9,2.0/0.35,2.25/2.95,3.3/0.45,3.15/2.95,1.25/1.45,3.45/1.05} {
+    \node[bg] at (\x,\y) {}; \node[bg] at (13.2-\x,\y) {};
+  }
+  \draw[black!14, line width=0.5pt] (0.45,0.45)--(1.25,1.45)--(1.15,2.9) (2.0,0.35)--(3.3,0.45) (2.25,2.95)--(3.15,2.95);
+  \draw[black!14, line width=0.5pt] (12.75,0.45)--(11.95,1.45)--(12.05,2.9) (11.2,0.35)--(9.9,0.45) (10.95,2.95)--(10.05,2.95);
+  % ---------------- seeds: the same five colors on both sides, joined across
+  \foreach \y/\c [count=\k] in {2.85/seed1,2.25/seed2,1.65/seed3,1.05/seed4,0.45/seed5} {
+    \node[sq, draw=\c, fill=\c!35] (sA\k) at (4.6,\y) {};
+    \node[sq, draw=\c, fill=\c!35] (sB\k) at (8.6,\y) {};
+    \draw[\c, densely dotted, line width=0.9pt] (sA\k.east)--(sB\k.west);
+  }
+  \node[font=\scriptsize, text=ink, align=center, fill=white, inner sep=1pt] at (6.6,3.55) {guessed seed pairs\\[-0.4mm] ($100$ of them; $5$ shown)};
+  % ---------------- the query, its partner, and a twin path
+  \begin{scope}[visible on=<2->]
+  \node[rootstar, minimum size=4.2mm] (q) at (0.55,1.75) {};
+  \node[font=\small, above=0.8mm of q] {$35$};
+  \node[rootstar, minimum size=4.2mm] (q') at (12.65,1.75) {};
+  \node[font=\small, above=0.8mm of q'] {$47$};
+  \end{scope}
+  \begin{scope}[visible on=<3->]
+  \node[pv] (r1) at (1.75,0.85) {}; \node[pv] (r2) at (2.85,2.15) {}; \node[pv] (r3) at (3.65,1.6) {};
+  \draw[tw, cA] (q)--(r1)--(r2)--(r3);
+  \draw[seed4, densely dashed, line width=1.0pt] (r1)--(sA4);
+  \draw[seed2, densely dashed, line width=1.0pt] (r2)--(sA2);
+  \node[pv] (t1) at (13.2-1.75,0.85) {}; \node[pv] (t2) at (13.2-2.85,2.15) {}; \node[pv] (t3) at (13.2-3.65,1.6) {};
+  \draw[tw, cB] (q')--(t1)--(t2)--(t3);
+  \draw[seed4, densely dashed, line width=1.0pt] (t1)--(sB4);
+  \draw[seed2, densely dashed, line width=1.0pt] (t2)--(sB2);
+  \end{scope}
+  % ---------------- signatures
+  \begin{scope}[visible on=<4->]
+  \def\barsA{0.55,0.25,0.80,0.40,0.15,0.62,0.35,0.70,0.30,0.50,0.20,0.45}
+  \def\barsB{0.50,0.30,0.72,0.45,0.10,0.58,0.40,0.66,0.22,0.55,0.28,0.40}
+  \foreach \h [count=\k] in \barsA {
+    \pgfmathsetmacro{\xx}{0.55+0.33*\k}
+    \ifnum\k=3 \def\bc{seed4}\else\def\bc{cA!65}\fi
+    \fill[\bc] (\xx,-1.55) rectangle +(0.22,\h);
+  }
+  \foreach \h [count=\k] in \barsB {
+    \pgfmathsetmacro{\xx}{8.65+0.33*\k}
+    \ifnum\k=3 \def\bc{seed4}\else\def\bc{cB!65}\fi
+    \fill[\bc] (\xx,-1.55) rectangle +(0.22,\h);
+  }
+  \draw[ink!50, line width=0.4pt] (0.75,-1.55)--(4.75,-1.55) (8.85,-1.55)--(12.85,-1.55);
+  \node[font=\scriptsize, text=cA] at (2.75,-1.85) {signature of $35$: one count per word};
+  \node[font=\scriptsize, text=cB] at (10.85,-1.85) {signature of $47$: one count per word};
+  \node[font=\small, text=kgreen, align=center, anchor=south] at (6.6,-1.22) {correlated\\[-0.3mm] vectors};
+  \draw[kgreen, line width=0.7pt, {Latex[length=1.6mm]}-{Latex[length=1.6mm]}] (5.0,-1.35)--(8.2,-1.35);
+  \end{scope}
+\end{tikzpicture}
+
+\vspace{2mm}
+\raggedright
+\only<1>{1. Guess $K=100$ seed pairs, and pretend they are correct.}%
+\only<2>{2. Pick a vertex, say $35$ in $A$. \ Suppose it corresponds to $47$ in $B$.}%
+\only<3>{3. A \kw{word} is a sequence of seeds, here \textcolor{seed4}{\textbf{pink}} then \textcolor{seed2}{\textbf{green}}: count the paths from $35$ that pass next to these seeds, in order. \ Each has a \kw{twin} from $47$: the same people, mostly the same edges.}%
+\only<4->{4. Do this for every word. \ The signature vectors of $35$ and $47$ are \good{correlated}; \ for a wrong vertex in $B$ they are not.}
+\end{frame}
+
+
+\begin{frame}{With the right seeds, the partner stands out}
+\centering
+\includegraphics[width=0.9\textwidth]{toy_simulation.pdf}
+
+\vspace{2mm}
+\raggedright
+\begin{itemize}\setlength{\itemsep}{0.4em}
+\item Each dot is one seed. \ Signature of $35$ against that of its partner $47$: \good{correlated}; \ against another vertex: not.
+\item<2-> So the score $S(35,j)=\ip{\Phi^A(35)}{\Phi^B(j)}$ is largest at the partner $j=47$.
+\end{itemize}
+\vfill
+{\tiny\color{kgray}Simulation: correlated random geometric graphs with $n=d=2000$ (edge correlation $\approx0.8$) and $K=100$ seeds; one coordinate per seed.\par}
+\end{frame}
+
+
+\begin{frame}{Seeded path signatures \ {\normalsize\color{kgray}(high-dimensional regime)}}
+\begin{columns}[c,onlytextwidth]
+\begin{column}{0.53\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.3em}
+\item Centered entries $Z^G_{uv}=\frac{G_{uv}-p}{\sqrt{p(1-p)}}$, \ $G\in\{A,B\}$
+\item Seeds $s_a^A=a$, \ $s_a^B=\pi(a)$, \ $a\in[K]$
+\end{itemize}
+\[
+ \Phi_w^G(i)=n^{-V/2}\!\!\!\!\sum_{\substack{r_1,\dots,r_V\ \text{distinct}\\ \text{non-seed vertices}}}\!\!\!\! Z^G_{ir_1}\prod_{t=1}^{V-1}Z^G_{r_tr_{t+1}}\,Z^G_{s^G_{w_t}r_t}
+\]
+\uncover<2->{%
+\begin{kboxplain}
+\centering
+$\Phi^G(i)=\big(\Phi^G_w(i)\big)_{w\in[K]^{V-1}}\in\R^{J}$, \quad $J=K^{V-1}$\\[1mm]
+$\displaystyle S(i,j)=\ip{\Phi^A(i)}{\Phi^B(j)}=\sum_{w}\Phi^A_w(i)\,\Phi^B_w(j)$
+\end{kboxplain}}
+\end{column}
+\begin{column}{0.45\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.9]
+  \foreach \x/\y in {0.6/0.6,0.9/-0.9,1.6/0.75,2.3/-1.0,2.9/0.7,3.4/-0.6,4.1/0.75,4.6/-0.15,4.75/0.55,1.2/-0.35,3.75/0.1,2.6/-0.25}
+    \fill[soft] (\x,\y) circle (0.55mm);
+  \node[rootstar, minimum size=3.6mm, fill=cA, draw=cA] (q) at (-0.45,0) {};
+  \node[font=\scriptsize, text=cA, below=1mm of q] {$i$};
+  \foreach \k/\x/\y in {1/0.95/0.25,2/1.95/-0.45,3/2.95/0.25,4/3.95/-0.45} \node[circle, draw=cA, fill=white, line width=0.7pt, minimum size=3.6mm, inner sep=0pt, font=\tiny] (r\k) at (\x,\y) {$r_{\k}$};
+  \draw[eA] (q)--(r1)--(r2)--(r3)--(r4);
+  \node[seedsq, draw=seed1, fill=seed1!20] (s1) at (1.45,1.55) {};
+  \node[seedsq, draw=seed2, fill=seed2!20] (s2) at (2.95,1.55) {};
+  \node[font=\tiny, text=seed1!70!black, above=0.3mm of s1] {$s_1=1$};
+  \node[font=\tiny, text=seed2!70!black, above=0.3mm of s2] {$s_2=2$};
+  \draw[se, seed1] (s1)--(r1); \draw[se, seed2] (s2)--(r2); \draw[se, seed1] (s1)--(r3);
+  \node[font=\scriptsize, text=ink] at (2.7,-1.6) {one summand for $w=(1,2,1)$ in graph $A$};
+\end{tikzpicture}
+
+\vspace{1mm}
+\uncover<3->{\footnotesize Each summand is a copy of $H_w$: root at $i$, seeds fixed, path through non-seed vertices. \ Length $V=\lceil C_0\log\log n\rceil$, so $J=K^{V-1}=\mathrm{polylog}(n)$.}
+\end{column}
+\end{columns}
+\vspace{0.5mm}
+\uncover<4->{%
+\begin{softbox}[paleO]
+\small \lab{\textbf{Amplification}}: each word has $2V-1$ edges, so its squared signal is $\approx r^{2(2V-1)}$. \ Summing over $K^{V-1}$ words, \ $\mathrm{SNR}^2\approx r^2(Kr^4)^{V-1}$, which grows once $K>r^{-4}$: \ \good{any fixed $r>0$}.
+\end{softbox}}
+\end{frame}
+
+\begin{frame}{Polynomial time: color coding \ \ct{Alon Yuster Zwick 95}}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.55\textwidth}
+Exhaustive search over paths: $n^{\Theta(V)}$ time.
+\begin{enumerate}\setlength{\itemsep}{0.35em}
+\item<2-> Color each vertex uniformly from $[V]$.
+\item<3-> Count \kw{colorful} paths (distinct colors) by dynamic programming over (level, used colors, vertex):
+\[ F_t(Q,r)=Z_{s_{w_t}r}\textstyle\sum_{q}Z_{rq}\,F_{t+1}(Q\setminus\{\chi(r)\},q). \]
+\item<4-> Rescale by $p_{\mathrm{col}}=\frac{V!}{V^V}\approx e^{-V}$ and average over $M$ colorings.
+\end{enumerate}
+\uncover<5->{\small $V=\Theta(\log\log n)$: \ $e^{-V}$ and $2^V$ are \good{polylog}$(n)$. \ Time $n^{2+o(1)}$ per seed guess; \ total $O(n^{K+2+o(1)}+n^3)$.}
+\end{column}
+\begin{column}{0.43\textwidth}
+\centering
+\begin{tikzpicture}[visible on=<2->, scale=0.95]
+  \definecolor{cc1}{HTML}{4C9BE8}\definecolor{cc2}{HTML}{F25C78}\definecolor{cc3}{HTML}{F2B43A}\definecolor{cc4}{HTML}{3DBE8B}
+  \fill[black!4, rounded corners=8pt] (-0.2,-0.4) rectangle (5.0,3.0);
+  \foreach \x/\y/\c in {0.3/0.3/1,0.9/1.5/2,0.5/2.5/3,1.6/0.6/4,2.0/2.1/1,2.6/1.2/3,3.1/2.6/2,3.3/0.3/2,3.9/1.6/4,4.5/2.5/1,4.6/0.7/3,1.3/2.7/4,2.4/0.0/1,4.2/0.05/4}
+    \fill[cc\c] (\x,\y) circle (1.15mm);
+  \draw[visible on=<3->, ink, line width=1.1pt] (0.3,0.3)--(0.9,1.5)--(0.5,2.5)--(1.3,2.7);
+  \node[visible on=<3->, font=\scriptsize, text=kgreen!70!black] at (1.15,3.25) {colorful: counted};
+  \draw[visible on=<3->, kred, line width=1.0pt, densely dashed] (3.3,0.3)--(3.9,1.6)--(3.1,2.6)--(4.5,2.5);
+  \node[visible on=<3->, font=\scriptsize, text=kred] at (3.9,3.25) {repeated color: dropped};
+  \node[font=\scriptsize, text=kgray] at (2.4,-0.75) {$V=4$ colors};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\vfill
+{\tiny\color{kgray}Color coding for subgraph counts in statistics: Hopkins Steurer 17; Mao Wu Xu Yu 23, 24; Li 25\par}
+\end{frame}
+
+\begin{frame}{The algorithm}
+\centering
+\vspace{0.5mm}
+\begin{tikzpicture}[node distance=4.6mm]
+  \tikzset{st/.style={draw=soft, line width=0.7pt, rounded corners=2pt, fill=white, align=center,
+             font=\footnotesize, text width=2.85cm, minimum height=1.3cm, inner sep=2.5pt},
+           nt/.style={font=\scriptsize, text=kgray, align=center}}
+  \node[st] (s1) {{\small\bfseries 1. Guess seeds}\\[0.6mm] $K$ seed pairs,\\ one of $\le n^K$ choices};
+  \node[st, right=of s1, fill=paleA] (s2) {{\small\bfseries 2. Signatures}\\[0.6mm] seeded path counts\\ (color coding)};
+  \node[st, right=of s2] (s3) {{\small\bfseries 3. Candidate}\\[0.6mm] match the pairs with\\ large scores $S(i,j)$};
+  \node[st, right=of s3, fill=paleG, draw=kgreen, line width=0.9pt] (s4) {{\small\bfseries 4. Select, refine}\\[0.6mm] best candidate, then\\ fix all errors: $\hat\pi=\pi$};
+  \draw[flow] (s1)--(s2); \draw[flow] (s2)--(s3); \draw[flow] (s3)--(s4);
+  \begin{scope}[on background layer]
+    \node[draw=black!35, densely dashed, rounded corners=4pt, fit=(s1)(s3), inner sep=2mm] (loop) {};
+  \end{scope}
+  \node[nt, anchor=north] at (loop.south) {repeated for every seed guess: $\le n^K$ candidates; \ with the right seeds, $\le\varepsilon n$ errors};
+\end{tikzpicture}
+
+\vspace{1.5mm}
+\raggedright
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.58\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item<2-> \lab{Select} the candidate $\tau$ with the largest overlap $\sum_{i<j}\overline A_{ij}\,\overline B_{\tau(i)\tau(j)}$.
+\item<3-> \lab{Refine}: \ $\hat\pi(i)=\arg\max_j\sum_k\overline A_{ik}\,\overline B_{j\tau(k)}$.
+\end{itemize}
+\vspace{1mm}
+\uncover<4->{%
+\begin{kbox}{Proposition}
+\small W.h.p., \emph{simultaneously} for all lists of $\le n^K$ candidates containing one with $\le\varepsilon n$ errors, the output is $\pi$.
+\end{kbox}}
+\end{column}
+\begin{column}{0.40\textwidth}
+\centering
+\begin{tikzpicture}[visible on=<3->, scale=0.82]
+  \tikzset{va/.style={circle, draw=cA, fill=paleA, minimum size=4mm, inner sep=0pt, font=\tiny, text=cA},
+           vb/.style={circle, draw=cB, fill=paleB, minimum size=4mm, inner sep=0pt, font=\tiny, text=cB}}
+  \node[va, minimum size=5mm, font=\scriptsize] (i) at (0,0) {$i$};
+  \foreach \k/\a in {1/120,2/180,3/240} \node[va] (k\k) at ($(i)+(\a:1.1)$) {$k_{\k}$};
+  \foreach \k in {1,2,3} \draw[eA] (i)--(k\k);
+  \begin{scope}[shift={(3.3,0)}]
+  \node[vb, minimum size=5mm, font=\scriptsize] (j) at (0,0) {$j$};
+  \foreach \k/\a in {1/60,2/0,3/-60} \node[vb] (m\k) at ($(j)+(\a:1.1)$) {};
+  \foreach \k in {1,2,3} \draw[eB] (j)--(m\k);
+  \end{scope}
+  \draw[korange, densely dotted, line width=0.8pt, -{Latex[length=1.6mm]}] (k1) to[bend left=35] (m1);
+  \draw[korange, densely dotted, line width=0.8pt, -{Latex[length=1.6mm]}] (k2) to[bend right=30] (m2);
+  \draw[korange, densely dotted, line width=0.8pt, -{Latex[length=1.6mm]}] (k3) to[bend right=35] (m3);
+  \node[font=\scriptsize, text=korange] at (1.65,1.55) {$\tau$};
+  \node[font=\scriptsize, align=center] at (1.65,-2.15) {refine: neighbors of $i$ map to\\ neighbors of $j$ $\Rightarrow$ $j=\pi(i)$};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Connection to the iterative algorithm of Ding--Li}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.48\textwidth}
+\textbf{Ding--Li} \cts{Ding Li 25ab}: guess $K_0$ seeds, then iterate:
+\begin{itemize}\small\setlength{\itemsep}{0.2em}
+\item aggregate features through the adjacency matrix; apply \kw{nonlinear} maps;
+\item more features, each weaker: $K_{t+1}\gg K_t$, $\varepsilon_{t+1}<\varepsilon_t$, but $K_t\varepsilon_t^2\uparrow$.
+\end{itemize}
+
+\centering
+\begin{tikzpicture}[scale=0.72]
+  \foreach \t/\n in {0/2,1/4,2/8} {
+    \foreach \k in {1,...,\n} \fill[kblue, opacity=0.95-0.27*\t] (1.75*\t, -0.25*\k) rectangle +(0.95,-0.18);
+    \node[font=\scriptsize] at (1.75*\t+0.48,0.14) {$t=\t$};
+  }
+  \draw[flow] (1.05,-0.45)--(1.6,-0.45);
+  \draw[flow] (2.8,-0.45)--(3.35,-0.45);
+  \node[font=\scriptsize, text=kgray, anchor=north] at (2.3,-2.3) {more features, each weaker};
+\end{tikzpicture}
+\end{column}
+\begin{column}{0.50\textwidth}
+{%
+\textbf{Ours}: the same amplification as \kw{path counts}. For each seed $a$,
+\[ h\longmapsto\Big(Z_{s_ar}\sum_{r'}Z_{rr'}\,h(r')\Big)_{r}. \]
+Start at $h\equiv1$, apply $w_{V-1},\dots,w_1$, contract with $Z_{i\cdot}$.}
+
+\centering
+\begin{tikzpicture}[scale=0.7]
+  \node[circle, fill=ink, inner sep=0pt, minimum size=2mm] (o) at (0,0) {};
+  \foreach \a/\y in {1/0.9,2/0,3/-0.9} {
+    \node[circle, fill=seed\a, inner sep=0pt, minimum size=1.8mm] (l\a) at (1.3,\y) {};
+    \draw[seed\a, line width=0.9pt] (o)--(l\a);
+    \foreach \b/\dy in {1/0.28,2/0,3/-0.28} {
+      \node[circle, fill=seed\b, inner sep=0pt, minimum size=1.4mm] (m\a\b) at (2.5,\y+\dy) {};
+      \draw[seed\b, line width=0.7pt] (l\a)--(m\a\b);
+    }
+  }
+  \node[font=\scriptsize] at (0,-1.45) {$h\equiv1$};
+  \node[font=\scriptsize] at (1.3,-1.45) {$K$};
+  \node[font=\scriptsize] at (2.5,-1.45) {$K^2$};
+  \node[font=\scriptsize, text=kgray, align=left, anchor=west] at (2.9,0) {each step: one path\\ edge $+$ one seed edge};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\vspace{0.5mm}
+{%
+\begin{softbox}
+\small Linearized BP $\leadsto$ \kw{non-backtracking} walks \cts{Krzakala et al.\ 13; Bordenave Lelarge Massoulié 15; Mossel Neeman Sly 18}.
+Similarly, word counts give this amplification with explicit polynomials, on \kw{self-avoiding} paths.
+\end{softbox}}
+\end{frame}
+
+% ===================================================================
+% PART 4: ANALYSIS: CONCENTRATION AND THE LATENT GEOMETRY
+% ===================================================================
+
+\outlineslide{4}
+
+\begin{frame}{Concentration: paths of length $\log\log n$ suffice}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.55\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.4em}
+\item Chebyshev $+$ union bound over $n^2$ false pairs needs $\mathrm{SNR}^2\ge n^{2+\varepsilon}$: templates of size $\Theta(\log n)$ \cts{Barak et al.\ 19; Mao Wu Xu Yu 23, 24; Niu Schramm Xu 26}
+\item<2-> Ours: $S(i,j)=(y_i^A)^{\top}\mathcal M\,y_j^B$, where $y_k^G=(Z^G_{kr})_r$ are the edges at $k$ and $\mathcal M$ counts the rest of the paths. \ Given the rest, for $j\ne\pi(i)$: a \kw{bilinear form in two (nearly) independent vectors}.
+\item<3-> Hanson--Wright type tail \cts{Hanson Wright 71; Hsu Kakade Zhang 12}:
+\[ \P\big[|S(i,j)|\ge t\,\big|\,\text{rest}\big]\le C e^{-c\min\{t^2/(\kappa^2J),\ t/\kappa\}}. \]
+\item<4-> So $\mathrm{SNR}^2=\mathrm{polylog}(n)$ already beats all $n^2$ false pairs.
+\end{itemize}
+\end{column}
+\begin{column}{0.43\textwidth}
+\centering
+\begin{tikzpicture}[visible on=<2->, scale=0.92, every node/.append style={transform shape}]
+  \fill[black!5, rounded corners=6pt] (0.9,-1.5) rectangle (2.3,1.5);
+  \fill[black!5, rounded corners=6pt] (3.3,-1.5) rectangle (4.7,1.5);
+  \foreach \y in {-1.2,-0.8,...,1.25} { \fill[soft] ({1.6+0.25*sin(250*\y)},\y) circle (0.55mm); \fill[soft] ({4.0+0.25*cos(230*\y)},\y) circle (0.55mm); }
+  \node[font=\scriptsize, text=cA] at (1.6,1.75) {rest of $A$, fixed};
+  \node[font=\scriptsize, text=cB] at (4.0,1.75) {rest of $B$, fixed};
+  \node[rootstar, fill=cA, draw=cA, minimum size=3.6mm] (qi) at (0,0) {};
+  \node[font=\scriptsize, text=cA, below=1mm of qi] {query $i$};
+  \node[rootstar, fill=cB, draw=cB, minimum size=3.6mm] (qj) at (5.6,0) {};
+  \node[font=\scriptsize, text=cB, below=1mm of qj] {query $j$};
+  \foreach \y in {-1.2,-0.4,0.4,1.2} {\draw[cA!70, line width=0.5pt] (qi)--({1.6+0.25*sin(250*\y)},\y);}
+  \foreach \y in {-1.2,-0.4,0.4,1.2} {\draw[cB!70, line width=0.5pt] (qj)--({4.0+0.25*cos(230*\y)},\y);}
+  \node[font=\scriptsize, text=kgray, align=center] at (2.8,-2.05) {fresh, independent edges\\ from the queries};
+  \draw[ink!60, densely dotted, line width=0.7pt] (2.3,0)--(3.3,0);
+  \node[font=\scriptsize] at (2.8,0.25) {$\mathcal M$};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Geometric dependence: two regimes}
+\lab{Challenge 2}: geometric correlations are small, but they \bad{accumulate} over many path embeddings.
+
+\vspace{1mm}
+\centering
+\begin{tikzpicture}[scale=0.8, every node/.append style={transform shape},
+  bx/.style={draw=soft, line width=0.6pt, fill=white, align=center, inner sep=2.5pt, minimum height=6mm, text width=5.0cm, font=\small, rounded corners=1.5pt},
+  cnt/.style={bx, draw=cA, fill=paleA},
+  bnd/.style={bx, draw=cA, text=cA},
+  cor/.style={bx, draw=cB, fill=paleB, line width=0.9pt},
+  lab/.style={font=\scriptsize, align=left, inner sep=2pt}]
+  \node[align=center, font=\small] (tL) at (0,0.1) {\textbf{high dimension} \ $d>n/(\log n)^{L_0}$};
+  \node[align=center, font=\small] (tR) at (7.0,0.1) {\textbf{intermediate} \ $(\log n)^{L}\le d\le n/(\log n)^{L_0}$};
+  \node[bx] (R1) at (7.0,-0.75) {observed graph $G$};
+  \node[bx, below=3.5mm of R1] (R2) {spectral embedding $f_G$, seed directions $v_a^G$};
+  \node[cor, below=3mm of R2] (R3) {\textcolor{cB}{$H_3$}: remove the linear part};
+  \node[cnt, below=3mm of R3] (R4) {seeded path counts, corrected weights};
+  \node[bnd, below=10mm of R4] (R5) {score bounds};
+  \node[bx] (L1) at (0,-0.75) {observed graph $G$};
+  \node[cnt] (L4) at (L1 |- R4) {seeded path counts, products of $Z^G$};
+  \node[font=\small, align=center] (L2) at ($(L1.south)!0.5!(L4.north)$) {center and normalize: \ $Z^G_{uv}=\frac{G_{uv}-p}{\sqrt{p(1-p)}}$};
+  \node[bnd] (L5) at (L1 |- R5) {mean and covariance bounds};
+  \draw[flow] (L1)--(L2); \draw[flow] (L2)--(L4);
+  \draw[flow, dashed] (L4)--node[lab, right, align=left]{compare with correlated \ER\\ {\color{kgray}adapting Liu Mohanty Schramm Yang 24}} (L5);
+  \draw[flow] (R1)--(R2); \draw[flow] (R2)--(R3); \draw[flow] (R3)--(R4);
+  \draw[flow, dashed] (R4)--node[lab, right]{embedding $+$ overlap errors} (R5);
+\end{tikzpicture}
+
+\vspace{0.5mm}
+\raggedright
+{\scriptsize\color{kgray}The split follows when the latent geometry can be recovered spectrally: Araya De Castro 19; Eldan Mikulincer Pieters 22; \me\ Schramm 23; Mao Zhang 24; Fernandez Zhu 26}
+\end{frame}
+
+\begin{frame}{Intermediate dimension: use the geometry}
+\begin{itemize}\setlength{\itemsep}{0.6em}
+\item In intermediate dimension, we first make use of the \kw{geometric information}.
+\item<2-> \lab{Step 1}: from the graph, estimate the locations of the latent vectors: an \kw{embedding} \ct{\me\ Schramm 23; Fernandez Zhu 26}
+\item<3-> \lab{Step 2}: count seeded paths with the \kw{estimated latent vectors} instead of the raw edges. \ They are more accurate.
+\item<4-> Along the way, \kw{spherical harmonics} show up (the Fourier modes of the sphere) \cts{Dai Xu 13}.
+\end{itemize}
+\vspace{2mm}
+\centering
+\uncover<4->{\includegraphics[width=0.56\textwidth]{spherical_harmonics.pdf}\\[0.5mm]
+{\scriptsize\color{kgray}spherical harmonics of degree $0,1,2,3$\par}}
+\end{frame}
+
+\begin{frame}{Intermediate dimension: spectral embedding}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.51\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item Top-$d$ eigenvectors of $A-p$ $\approx$ \kw{degree-1 harmonics} (linear functions of $u_i$).
+\item<2-> Spectral embedding: $f_G(i)\approx\sqrt d\,u_i^G$ \bad{up to a rotation} \cts{\me\ Schramm 23; Fernandez Zhu 26}
+\item<3-> With latent vectors, a seeded path has weight
+\[ u_i^{\top}\Big(\prod_{t<V}\ip{u_{r_t}}{u_{w_t}}\,u_{r_t}u_{r_t}^{\top}\Big)u_{r_V}. \]
+\item<4-> Scalar contractions are \good{rotation invariant}: the two embeddings may use unrelated coordinates.
+\end{itemize}
+\end{column}
+\begin{column}{0.47\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[inner sep=0pt] (l) at (0,0) {\includegraphics[width=2.6cm]{spectral_latent.pdf}};
+  \node[inner sep=0pt] (r) at (3.4,0) {\includegraphics[width=2.6cm]{spectral_embedding.pdf}};
+  \node[font=\scriptsize, above=0.5mm of l] {latent $u_i$};
+  \node[font=\scriptsize, above=0.5mm of r] {spectral embedding};
+  \draw[flow] (1.4,0)--(2.0,0);
+  \node[inner sep=0pt] (e) at (1.2,-2.65) {\includegraphics[width=3.3cm]{spectral_eigs.pdf}};
+  \node[font=\tiny, text=kgray, align=left, anchor=west] at (2.95,-2.45) {$d=3$: eigenvalues in\\ blocks of $3,5,7,\dots$\\ (harmonics of degree\\ $1,2,3,\dots$)};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{The harmonic correction $H_3$}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.62\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.35em}
+\item As a function of $z\in\mathbb S^{d-1}$, the cubic $(z^{\top}v)\,zz^{\top}$ has spherical harmonics of degree \kw{3 and 1}, \ just as $x^3=\mathrm{He}_3(x)+3x$.
+\item<2-> The degree-$1$ part creates spurious overlaps between \bad{different words}: a vertex internal in one path, terminal in another.
+\item<3-> Keep only the degree-3 part (the analogue of $\mathrm{He}_3$):
+\[ H_3(z)[v]=(z^{\top}v)zz^{\top}-\tfrac{\|z\|^2}{d+2}\big(zv^{\top}+vz^{\top}+(z^{\top}v)I_d\big). \]
+\item<4-> Centered and orthogonal to linear functions:
+\[ \textstyle\int H_3(u)[v]\,\mu(du)=0,\quad \int H_3(u)[v]\,\ip{u}{a}\,\mu(du)=0. \]
+\item<5-> Corrected weight: $u_i^{\top}\big(\prod_t H_3(u_{r_t})[u_{w_t}]\big)u_{r_V}$.
+\end{itemize}
+\end{column}
+\begin{column}{0.36\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.92, visible on=<2->]
+  \tikzset{v/.style={circle, draw=ink, fill=white, minimum size=6.5mm, inner sep=0pt, line width=0.8pt, font=\small},
+           hv/.style={v, draw=cA, fill=paleA, text=cA, line width=1.2pt},
+           sd/.style={rectangle, draw=seed1, fill=seed1!20, text=seed1!70!black, minimum size=6mm, inner sep=0pt, font=\small, line width=0.9pt}}
+  \node[v] (i1) at (0,0) {$i$}; \node[hv] (r11) at (1.6,0) {$r_1$}; \node[v] (r21) at (3.2,0) {$r_2$};
+  \node[sd] (s1) at (1.6,1.15) {$s_a$};
+  \draw[pe] (i1)--(r11)--(r21); \draw[se, seed1] (s1)--(r11);
+  \node[font=\scriptsize, text=cA] at (1.6,-0.62) {internal: degree $3$};
+  \node[v] (i2) at (0,-1.9) {$i$}; \node[v] (r22) at (1.6,-1.9) {$r_2$}; \node[hv] (r12) at (3.2,-1.9) {$r_1$};
+  \node[sd] (s2) at (1.6,-3.05) {$s_a$};
+  \draw[pe] (i2)--(r22)--(r12); \draw[se, seed1] (s2)--(r22);
+  \node[font=\scriptsize, text=cA] at (3.2,-1.28) {terminal: degree $1$};
+  \node[font=\scriptsize, align=center, text=ink] at (1.6,-3.9) {after the correction, the two factors\\ in $u_{r_1}$ are \good{orthogonal}};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Summary: chandeliers vs.\ seeded paths}
+\centering
+\vspace{-1mm}
+\renewcommand{\arraystretch}{1.28}
+\setlength{\tabcolsep}{4pt}
+\footnotesize
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.35cm} >{\centering\arraybackslash}p{3.35cm} >{\centering\arraybackslash}p{3.45cm} >{\centering\arraybackslash}p{3.7cm}}
+ & \textbf{chandeliers} \newline \cts{Mao Wu Xu Yu 23} & \textbf{wide trees} \newline \cts{Niu Schramm Xu 26} & \textbf{seeded paths} \newline \cts{this work} \\
+\midrule
+templates & unlabeled trees & trees in the point--coordinate graph & paths $+$ $K$ seed labels \\
+growth of family & $\alpha^{-1}$ per edge & $\alpha^{-1}$ per edge pair & \good{$\sqrt K$ per edge, any $K$} \\
+threshold & $r>\sqrt\alpha$ & $\rho^2>\sqrt\alpha$ & \good{any $r>0$} \\
+template size & $\Theta(\log n)$ & $\Theta(\log n)$ & \good{$\Theta(\log\log n)$} \\
+seeds & none & none & $K$ guessed: $n^K$ tries \\
+concentration & Chebyshev $+$ union bound & Chebyshev $+$ union bound & conditional Hanson--Wright \\
+overlap analysis & delicate enumeration & Weingarten calculus & \good{paths are rigid} \\
+\bottomrule
+\end{tabular}
+
+\vspace{4mm}
+\raggedright
+\uncover<2->{\small The price of the seeds: time $n^{K+2+o(1)}$ with $K\gtrsim r^{-4}$, so the exponent grows as $r\downarrow0$ \ (consistent with the low-degree lower bound, at the end).}
+\end{frame}
+
+% ===================================================================
+% PART 5: LOWER BOUNDS, SUMMARY, OPEN PROBLEMS
+% ===================================================================
+
+\outlineslide{5}
+
+\begin{frame}{Low-degree lower bound}
+\begin{kbox}{Theorem 2 \ \cts{Huang, Jiao, \me, Li 26}}
+$\mathbb Q$: two \emph{independent} geometric graphs; \ $\P$: the correlated model, $\pi$ uniform. \ If $D\rho^2\to0$ and $D/d\to0$, then
+\par\vspace{1mm}
+{\centering $\displaystyle\sup_{\deg f\le D}\ \frac{\big|\E_{\P}f-\E_{\mathbb Q}f\big|}{\sqrt{\mathrm{Var}_{\mathbb Q}f}}=o(1).$\par}
+\end{kbox}
+\vspace{1mm}
+\begin{itemize}\setlength{\itemsep}{0.45em}
+\item<2-> \lab{Result}: in the low-degree framework \cts{Hopkins 18; Kunisky Wein Bandeira 22}, polynomials need degree $\gtrsim\rho^{-2}\asymp1/r$, \ as in dense correlated \ER \ct{Ding Du Li 25}.
+\item<3-> \lab{Meaning}: every fixed $\rho>0$ is solvable in polynomial time (Theorem 1), but the cost must grow as $\rho\to0$. \ No sharp threshold, but a \kw{smooth tradeoff} between correlation and running time, as for tensor PCA \cts{Li 25; Kothari Xu 26} and sparse PCA \cts{Ding Kunisky Wein Bandeira 24}.
+\item<4-> \lab{Idea}: reduce to the $\chi^2$-divergence between the Gram matrices of $D$ aligned pairs and of two independent clouds \ct{inspired by Li 26}; \ a harmonic expansion gives $\chi^2\lesssim D^2(\rho^2+d^{-1})^2$.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Information-theoretic limits \ \ct{companion paper II}}
+For $d\ge C(\log n)^3$, the exact recovery transition is at
+\[ \rho^2\ \asymp\ \max\Big\{\frac{\log d}{d},\ \sqrt{\frac{\log n}{n}}\Big\}. \]
+\vspace{-2mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.52\textwidth}
+\begin{itemize}\setlength{\itemsep}{0.4em}
+\item<2-> $\sqrt{\log n/n}$: from comparing edges, as for Gaussian edge weights with correlation $\rho^2$.
+\item<3-> $\log d/d$: from the \kw{prescribed angle}, once the latent vectors are reconstructed.
+\item<4-> Lower bounds: reflections that fix both graphs; a Gram likelihood averaged over rotations.
+\item<5-> A vanishing threshold, against constant correlation for efficient algorithms: an \bad{information--computation gap}.
+\end{itemize}
+\end{column}
+\begin{column}{0.46\textwidth}
+\centering
+\begin{tikzpicture}[x=4.3cm, y=5.4cm, font=\scriptsize]
+  % regions (x = log d / log n, y = log rho^2 / log n; top = constant correlation)
+  \fill[kblue!11] (0,0) -- (1,0) -- (1,-0.5) -- (0.5,-0.5) -- (0,0) -- cycle;
+  \fill[kred!9] (0,0) -- (0.5,-0.5) -- (1,-0.5) -- (1,-0.64) -- (0,-0.64) -- cycle;
+  \fill[pattern=north east lines, pattern color=kred!35] (0.5,-0.5) rectangle (1,-0.64);
+  % boundary
+  \draw[line width=1.1pt, ink] (0,0) -- (0.5,-0.5) -- (1,-0.5);
+  % efficient algorithms: constant correlation only
+  \draw[visible on=<5->, kgreen, line width=2.2pt] (0.02,0) -- (1,0);
+  \node[visible on=<5->, text=kgreen!80!black, anchor=north east] at (1,-0.015) {polynomial time (Theorem 1)};
+  % axes
+  \draw[-{Latex[length=2mm]}, ink] (0,-0.64) -- (1.08,-0.64);
+  \node[below] at (0.24,-0.655) {$d$ (log scale)};
+  \draw[ink] (0,-0.64) -- (0,0.02);
+  \foreach \x/\l in {0.5/{\sqrt n},1/n} \draw (\x,-0.64) -- (\x,-0.655) node[below]{$\l$};
+  \draw (0,0) -- (-0.015,0) node[left]{$1$};
+  \draw (0,-0.5) -- (-0.015,-0.5) node[left]{$n^{-1/2}$};
+  \node[rotate=90, anchor=south] at (-0.17,-0.3) {$\rho^2$ (log scale)};
+  % labels
+  \node[text=kblue, align=center] at (0.7,-0.27) {exact recovery\\ possible};
+  \node[text=kred, align=center] at (0.23,-0.555) {exact recovery\\ impossible};
+  \node[text=kred, align=center, fill=white, inner sep=1pt, rounded corners=1pt, font=\tiny] at (0.75,-0.57) {even partial\\ recovery impossible};
+  \path (0.06,-0.06) -- (0.44,-0.44) node[midway, sloped, above, font=\tiny] {$\rho^2\asymp\log d/d$};
+  \node[above, font=\tiny] at (0.75,-0.5) {$\rho^2\asymp\sqrt{\log n/n}$};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Summary}
+\vspace{2mm}
+\begin{uncoverenv}<1->
+\iconrow{%
+\begin{tikzpicture}[scale=0.42]
+  \foreach \i/\x/\y in {1/0/0,2/1/0.2,3/0.5/1,4/1.2/1.2} \coordinate (a\i) at (\x,\y);
+  \draw[cA, line width=0.8pt] (a1)--(a2)--(a3)--(a1) (a2)--(a4)--(a3);
+  \foreach \i/\c in {1/pc1,2/pc2,3/pc6,4/pc5} \filldraw[fill=\c, draw=ink, line width=0.4pt] (a\i) circle (0.2);
+  \begin{scope}[shift={(3.0,0.1)}, rotate=70]
+    \foreach \i/\x/\y in {1/0/0,2/1/0.2,3/0.5/1,4/1.2/1.2} \coordinate (b\i) at (\x,\y);
+    \draw[cB, line width=0.8pt] (b1)--(b2)--(b3)--(b1) (b2)--(b4)--(b3);
+    \foreach \i/\c in {1/pc1,2/pc2,3/pc6,4/pc5} \filldraw[fill=\c, draw=ink, line width=0.4pt] (b\i) circle (0.2);
+  \end{scope}
+\end{tikzpicture}}{%
+\textcolor{kgreen}{\textbf{Result.}} \ Exact recovery in polynomial time for correlated random geometric graphs, at every fixed correlation $\rho>0$ (for $d\ge(\log n)^L$), beyond the $\sqrt\alpha$ barrier of tree counting.}
+\end{uncoverenv}
+\vspace{3.5mm}
+\begin{uncoverenv}<2->
+\iconrow{%
+\begin{tikzpicture}[scale=0.62]
+  \miniword{0}{0}{1,2,1}{cA}
+\end{tikzpicture}}{%
+\textcolor{kblue}{\textbf{Seeded path counts.}} \ Seeds act as labels, with $K$ choices at each step of a path of length $\log\log n$; \ computed by color coding.}
+\end{uncoverenv}
+\vspace{3.5mm}
+\begin{uncoverenv}<3->
+\iconrow{%
+\begin{tikzpicture}
+  \shade[ball color=seed3!35] (0,0) circle (0.42);
+  \foreach \a/\r in {20/0.3,80/0.22,140/0.33,200/0.18,250/0.3,320/0.25,10/0.12,110/0.36}
+    \fill[seed3!80!black] (\a:\r) circle (0.035);
+  \draw[seed3!80!black, line width=0.5pt] (80:0.22) -- (140:0.33) (20:0.3) -- (10:0.12) -- (80:0.22);
+\end{tikzpicture}}{%
+\textcolor{seed3}{\textbf{Geometry.}} \ A local comparison with correlated \ER (high $d$); \ a spectral embedding and the harmonic correction $H_3$ (intermediate $d$).}
+\end{uncoverenv}
+\vspace{3.5mm}
+\begin{uncoverenv}<4->
+\iconrow{%
+\begin{tikzpicture}[x=1.3cm, y=0.85cm]
+  \fill[kblue!14] (0,1) -- (1,1) -- (1,0.42) -- (0.5,0.42) -- cycle;
+  \fill[kred!12] (0,1) -- (0.5,0.42) -- (1,0.42) -- (1,0) -- (0,0) -- cycle;
+  \draw[ink, line width=0.8pt] (0,1) -- (0.5,0.42) -- (1,0.42);
+  \draw[kgreen, line width=1.6pt] (0.02,1) -- (1,1);
+  \draw[ink!50, line width=0.4pt] (0,0) rectangle (1,1);
+\end{tikzpicture}}{%
+\textcolor{kmag}{\textbf{Low-degree and information-theoretic results.}} \ Low-degree tests need degree $\gtrsim\rho^{-2}$, a smooth tradeoff; \ the information-theoretic threshold is $\rho^2\asymp\max\{\frac{\log d}{d},\sqrt{\frac{\log n}{n}}\}$.}
+\end{uncoverenv}
+\end{frame}
+
+
+\begin{frame}{Future directions}
+\vspace{1mm}
+\begin{itemize}\setlength{\itemsep}{0.9em}
+\item \textcolor{kblue}{\textbf{General kernels and sparse geometric graphs.}} \ Replace the threshold by a general connection function: when do seeded path statistics still amplify the signal? \ Let $p\to0$, ultimately $p=n^{-1+o(1)}$: does the absence of a correlation threshold persist in sparse regimes?
+\item<2-> \textcolor{seed3}{\textbf{The low-dimensional regime.}} \ $d$ fixed or $d=o(\log n)$. \ With the Gram matrices, this is well understood \cts{Wang Wu Xu Yolou 22; Gong Li 24}. \ From the graphs alone: can we reconstruct the geometry well enough to distinguish nearby vertices, or can graph statistics succeed directly?
+\item<3-> \textcolor{kgreen}{\textbf{Inhomogeneity and more general edge dependencies.}} \ Nonuniform edge probabilities, latent communities, dependencies beyond independent latent pairs \cts{Ding Fei Wang 25; Rácz Sridhar 21, 22}. \ Also: correlated graph models based on real-world and scientific problems.
+\end{itemize}
+\vspace{5mm}
+\uncover<4->{\centering{\fontsize{19}{23}\selectfont\color{titleblue}Thank you very much!\par}}
+\end{frame}
+
+
+% ===================================================================
+% REFERENCES
+% ===================================================================
+
+\begin{frame}{References}
+\vspace{-1mm}
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.325\textwidth}
+\rh{\textcolor{titleblue}{This talk}}
+\rr{Huang, Jiao, \me, Li. Graph matching in random geometric graphs I: efficient algorithms. arXiv:2610.16675, 2026}
+\rr{Huang, Jiao, \me, Li. \dots\ II: information-theoretic limits. 2026}
+\rh{\textcolor{titleblue}{Correlated \ER graphs}}
+\rr{Pedarsani, Grossglauser. KDD 2011}
+\rr{Cullina, Kiyavash. SIGMETRICS 2016; arXiv 2017}
+\rr{Barak, Chou, Lei, Schramm, Sheng. NeurIPS 2019}
+\rr{Ganassali, Massoulié. COLT 2020}
+\rr{Mossel, Xu. Random Struct.\ Alg.\ 2020}
+\rr{Ding, Ma, Wu, Xu. PTRF 2021}
+\rr{Ganassali, Massoulié, Lelarge. COLT 2021}
+\rr{Mao, Rudelson, Tikhomirov. COLT 2021; PTRF 2023}
+\rr{Wu, Xu, Yu. IEEE TIT 2022; Ann.\ Appl.\ Probab.\ 2023}
+\rr{Fan, Mao, Wu, Xu. Found.\ Comput.\ Math.\ 2023}
+\rr{Hall, Massoulié. Oper.\ Res.\ 2023}
+\rr{Ding, Du. IEEE TIT 2023; Ann.\ Statist.\ 2023}
+\rr{Mao, Wu, Xu, Yu. STOC 2023; Ann.\ Statist.\ 2024}
+\rr{Ganassali, Lelarge, Massoulié. Ann.\ Appl.\ Probab.\ 2024}
+\rr{Ganassali, Massoulié, Semerjian. Ann.\ Appl.\ Probab.\ 2024}
+\rr{Ding, Li. Found.\ Comput.\ Math.; Math.\ Oper.\ Res.\ 2025}
+\rr{Ding, Du, Li. Ann.\ Statist.\ 2025}
+\rr{Huang, Song, Yang. IEEE TIT 2025}
+\rr{Huang, Yang. arXiv 2025; arXiv 2026}
+\rh{\textcolor{titleblue}{Tools}}
+\rr{Pólya. Acta Math.\ 1937; \ Otter. Ann.\ Math.\ 1948}
+\rr{Hanson, Wright. Ann.\ Math.\ Statist.\ 1971}
+\rr{Alon, Yuster, Zwick. J.\ ACM 1995}
+\rr{Hsu, Kakade, Zhang. Electron.\ Commun.\ Probab.\ 2012}
+\rr{Dai, Xu. Spherical harmonics. arXiv 2013}
+\end{column}
+\begin{column}{0.325\textwidth}
+\rh{\textcolor{titleblue}{Worst case}}
+\rr{Koopmans, Beckmann. Econometrica 1957}
+\rr{Makarychev, Manokaran, Sviridenko. ACM TALG 2014}
+\rr{Babai. STOC 2016}
+\rh{\textcolor{titleblue}{Applications and data}}
+\rr{Haghighi, Ng, Manning. HLT/EMNLP 2005}
+\rr{Singh, Xu, Berger. PNAS 2008}
+\rr{Narayanan, Shmatikov. IEEE S\&P 2008; 2009}
+\rr{Kazemi et al. BMC Bioinformatics 2016}
+\rr{Lähner et al. SHREC'16, Eurographics 3DOR 2016}
+\rr{Seckin et al. The rise of Bluesky. arXiv 2025}
+\rr{Quelle, Denker, Garg, Bovet. arXiv 2025}
+\rh{\textcolor{titleblue}{Procrustes and geometric matching}}
+\rr{Schönemann. Psychometrika 1966}
+\rr{Umeyama. IEEE TPAMI 1988}
+\rr{Wang, Wu, Xu, Yolou. COLT 2022}
+\rr{Gong, Li. arXiv 2024}
+\rr{Even, Ganassali, Maier, Massoulié. NeurIPS 2024}
+\rr{Niu, Schramm, Xu. arXiv 2026}
+\rh{\textcolor{titleblue}{Spectral methods, low degree}}
+\rr{Krzakala et al. PNAS 2013}
+\rr{Bordenave, Lelarge, Massoulié. FOCS 2015}
+\rr{Hopkins, Steurer. FOCS 2017; \ Hopkins. PhD thesis 2018}
+\rr{Mossel, Neeman, Sly. Combinatorica 2018}
+\rr{Kunisky, Wein, Bandeira. Springer PROMS 2022}
+\rr{Ding, Kunisky, Wein, Bandeira. Found.\ Comput.\ Math.\ 2024}
+\rr{Li. arXiv 2025; IEEE TIT 2026}
+\rr{Kothari, Xu. SODA 2026}
+\end{column}
+\begin{column}{0.325\textwidth}
+\rh{\textcolor{titleblue}{Random geometric graphs}}
+\rr{Dall, Christensen. Phys.\ Rev.\ E 2002}
+\rr{Penrose. Random Geometric Graphs. OUP 2003}
+\rr{Bubeck, Ding, Eldan, Rácz. Random Struct.\ Alg.\ 2016}
+\rr{Araya, De Castro. NeurIPS 2019}
+\rr{Brennan, Bresler, Nagaraj. PTRF 2020}
+\rr{Eldan, Mikulincer, Pieters. Combin.\ Probab.\ Comput.\ 2022}
+\rr{Liu, Mohanty, Schramm, Yang. STOC 2023; SIAM J.\ Comput.\ 2024}
+\rr{\me, Schramm. arXiv 2023}
+\rr{Mao, Zhang. Allerton 2024}
+\rr{Mao, Wu, Xu. arXiv 2026}
+\rr{Du, Mao, Sun, Wu, Xu. arXiv 2026 (two papers)}
+\rr{Fernandez, Zhu. arXiv 2026}
+\rh{\textcolor{titleblue}{Matching beyond correlated \ER}}
+\rr{Rácz, Sridhar. NeurIPS 2021; Ann.\ Appl.\ Probab.\ 2022}
+\rr{Gaudio, Rácz, Sridhar. COLT 2022}
+\rr{Ding, Fei, Wang. Ann.\ Statist.\ 2025}
+\rr{Chen, Ding, Gong, Li. arXiv 2025; Ann.\ Statist.\ 2026}
+\rr{Bäumler, Rácz, Ross, Sridhar. arXiv 2026}
+\rr{Vassaux. arXiv 2026}
+\rh{\textcolor{titleblue}{Images}}
+\rr{Bluesky data and figure: Seckin et al.\ 2025 (CC BY 4.0)}
+\rr{Procrustes cartoon: \emph{Berliner Wespen} 1878 (public domain, Wikimedia Commons)}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\end{document}
